@@ -34,6 +34,8 @@ func main() {
 
 	taskConsumer := &TaskConsumer{}
 	taskQueue.AddConsumer("Task consumer 1", taskConsumer)
+
+	select {}
 }
 
 // TaskConsumer represents the Redis topic consumer
