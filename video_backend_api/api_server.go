@@ -17,9 +17,7 @@ var (
 func main() {
 	loadEnvironmentVariables()
 
-	var db *pg.DB = getDatabaseConnection()
-
-	err := createSchemas(db)
+	err := createSchemas()
 	if err != nil {
 		glog.Infoln("Failed to sync up database tables. Check the connection.")
 		panic(err)
@@ -72,7 +70,13 @@ func getDatabaseConnection() *pg.DB {
 
 // createSchemas creates a set of database tables
 // from Go struct classes
-func createSchemas(db *pg.DB) error {
+func createSchemas() error {
+	var db *pg.DB = getDatabaseConnection()
+
+	defer func() {
+		db.Close()
+	}()
+
 	for _, model := range []interface{}{&VideoRendering{}, &Video{}} {
 		err := db.CreateTable(model, &orm.CreateTableOptions{
 			IfNotExists: true,
