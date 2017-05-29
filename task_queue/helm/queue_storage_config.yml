@@ -2,11 +2,11 @@
 
 ## NOTES: Redis can be accessed via port 6379 on the following DNS name from within your cluster:
 ##
-## queue-storage-redis.dev-cluster-1.svc.cluster.local
+## queue-storage-redis
 
 ## To get your password run:
 
-## REDIS_PASSWORD=$(kubectl get secret --namespace dev-cluster-1 queue-storage-redis -o jsonpath="{.data.redis-password}" | base64 --decode)
+## REDIS_PASSWORD=$(kubectl get secret queue-storage-redis -o jsonpath="{.data.redis-password}" | base64 --decode)
 
 ## To connect to your Redis server:
 
@@ -33,7 +33,7 @@ imagePullPolicy: IfNotPresent
 ## Defaults to a random 10-character alphanumeric string if not set
 ## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run
 ##
-# redisPassword:
+redisPassword: xtCWzoNXsC
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/

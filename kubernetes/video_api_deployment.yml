@@ -19,7 +19,7 @@ spec:
 
     spec:
       containers:
-        - name: video_api
+        - name: video-api
           image: n1207n/video-transcode-queue/video_backend_api:dev
           imagePullPolicy: Never
 
@@ -28,7 +28,7 @@ spec:
 
           ports:
             - containerPort: 8000
-              name: video_api
+              name: video-api
 
           env:
             - name: GET_HOSTS_FROM

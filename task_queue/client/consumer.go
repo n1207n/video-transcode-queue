@@ -8,11 +8,12 @@ import (
 
 	"github.com/adjust/rmq"
 	"github.com/golang/glog"
+	"gopkg.in/redis.v3"
 )
 
 var (
-	redisURL, redisPort string
-	redisProtocol       = "tcp"
+	redisURL, redisPort, redisPassword string
+	redisProtocol                      = "tcp"
 	// TODO: Make below variables as a CLI argument
 	redisTopic      = "transcode_video"
 	redisNetworkTag = "transcode_task_consume"
@@ -78,11 +79,24 @@ func loadEnvironmentVariables() {
 	if len(redisTopic) == 0 {
 		panic("No REDIS_TOPIC environment variable")
 	}
+
+	redisPassword = os.Getenv("REDIS_PASSWORD")
+	if len(redisPassword) == 0 {
+		panic("No REDIS_PASSWORD environment variable")
+	}
 }
 
 // openTaskQueue connects to redis and return a Queue interface
 func openTaskQueue() rmq.Queue {
-	connection := rmq.OpenConnection(redisNetworkTag, redisProtocol, fmt.Sprintf("%s:%s", redisURL, redisPort), 1)
+	redisClient := redis.NewClient(&redis.Options{
+		Network:  redisProtocol,
+		Addr:     fmt.Sprintf("%s:%s", redisURL, redisPort),
+		DB:       int64(1),
+		Password: redisPassword,
+	})
+
+	connection := rmq.OpenConnectionWithRedisClient(redisNetworkTag, redisClient)
+
 	glog.Infof("Connected to Redis task queue: %s\n", connection.Name)
 
 	return connection.OpenQueue(redisTopic)

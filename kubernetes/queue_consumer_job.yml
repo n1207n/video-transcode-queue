@@ -12,4 +12,15 @@ spec:
       - name: c
         image: n1207n/video-transcode-queue/task_queue/consumer:dev
         imagePullPolicy: Never
+        env:
+          - name: GET_HOSTS_FROM
+            value: dns
+          - name: REDIS_URL
+            value: "queue-storage-redis"
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_TOPIC
+            value: "transcode_video"
+          - name: REDIS_PASSWORD
+            value: "xtCWzoNXsC"
       restartPolicy: OnFailure
