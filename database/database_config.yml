@@ -1,0 +1,77 @@
+## NOTES:
+## PostgreSQL can be accessed via port 5432 on the following DNS name from within your cluster: app-database-postgresql.default.svc.cluster.local
+
+## To get your user password run:
+
+## PGPASSWORD=$(kubectl get secret --namespace default app-database-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode; echo)
+
+## To connect to your database run the following command (using the env variable from above):
+
+## kubectl run app-database-postgresql-client --rm --tty -i --image postgres --env "PGPASSWORD=$PGPASSWORD" --command -- psql -U video_app -h app-database-postgresql video_app
+
+## postgres image repository
+image: "postgres"
+## postgres image version
+## ref: https://hub.docker.com/r/library/postgres/tags/
+##
+imageTag: "9.6.2"
+
+## Specify a imagePullPolicy
+## 'Always' if imageTag is 'latest', else set to 'IfNotPresent'
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+##
+imagePullPolicy: "Always"
+
+## Create a database user
+## Default: postgres
+postgresUser: "video_app"
+## Default: random 10 character string
+postgresPassword: "video_app"
+
+## Create a database
+## Default: the postgres user
+postgresDatabase: "video_app"
+
+## Specify initdb arguments, e.g. --data-checksums
+## ref: https://github.com/docker-library/docs/blob/master/postgres/content.md#postgres_initdb_args
+## ref: https://www.postgresql.org/docs/current/static/app-initdb.html
+# postgresInitdbArgs:
+
+## Persist data to a persitent volume
+persistence:
+  enabled: true
+
+  ## A manually managed Persistent Volume and Claim
+  ## Requires persistence.enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+  # existingClaim:
+
+  ## If defined, volume.beta.kubernetes.io/storage-class: <storageClass>
+  ## Default: volume.alpha.kubernetes.io/storage-class: default
+  ##
+  # storageClass:
+  accessMode: ReadWriteOnce
+  size: 8Gi
+  subPath: "app-db"
+
+metrics:
+  enabled: false
+  image: wrouesnel/postgres_exporter
+  imageTag: v0.1.1
+  imagePullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 100m
+
+service:
+  port: 5432
+  externalIPs: []
