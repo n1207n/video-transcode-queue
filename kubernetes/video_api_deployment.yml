@@ -21,7 +21,7 @@ spec:
       containers:
         - name: video_api
           image: n1207n/video-transcode-queue/video_backend_api:dev
-          imagePullPolicy: Always
+          imagePullPolicy: Never
 
           command: ["bash"]
           args: ["-c", "/go/bin/api_server"]

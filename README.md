@@ -17,6 +17,7 @@ A sample infrastructure for processing video upload & transcoding.
 3. Install helm packages
   * `bash create helm_releases.sh`
 4. Build docker images
+ - `eval $(minikube docker-env)`
  - `bash build_docker_images.sh`
 5. Run Kubernetes resources
  - `bash build_kubernetes_resources.sh`
