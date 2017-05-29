@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+
+kind: Deployment
+
+metadata:
+  name: video-api
+  labels:
+    name: video-api
+    tier: backend
+
+spec:
+  replicas: 1
+
+  template:
+    metadata:
+      labels:
+        name: video-api
+        tier: backend
+
+    spec:
+      containers:
+        - name: video_api
+          image: n1207n/video-transcode-queue/video_backend_api:dev
+          imagePullPolicy: Always
+
+          command: ["bash"]
+          args: ["-c", "/go/bin/api_server"]
+
+          ports:
+            - containerPort: 8000
+              name: video_api
+
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+            - name: PGDB
+              value: video_app
+            - name: PGUSER
+              value: video_app
+            - name: PGPASSWORD
+              value: video_app
+            - name: PGHOST
+              value: video_app
