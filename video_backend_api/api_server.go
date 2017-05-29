@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -107,12 +109,70 @@ func startAPIServer() {
 	router.Run()
 }
 
-func getVideoList(c *gin.Context) {
+func getVideoObjects() (int, []*Video, error) {
+	var videos []*Video
+	var db *pg.DB = getDatabaseConnection()
+	var dbError error
 
+	defer func() {
+		db.Close()
+	}()
+
+	count, err := db.Model(&videos).Order("id DESC").SelectAndCount()
+	if err != nil {
+		dbError = err
+	}
+
+	return count, videos, dbError
+}
+
+func getVideoObject(videoID int) (*Video, error) {
+	var video *Video
+	var db *pg.DB = getDatabaseConnection()
+	var dbError error
+
+	defer func() {
+		db.Close()
+	}()
+
+	err := db.Model(&video).
+		Where("id = ?", videoID).
+		Select()
+	if err != nil {
+		dbError = err
+	}
+
+	return video, dbError
+}
+
+func getVideoList(c *gin.Context) {
+	count, videos, err := getVideoObjects()
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"count":   count,
+			"results": videos,
+		})
+	}
 }
 
 func getVideoDetail(c *gin.Context) {
+	videoID, err := strconv.Atoi(c.Param("id"))
 
+	video, err := getVideoObject(videoID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"data": video,
+		})
+	}
 }
 
 func createVideo(c *gin.Context) {
