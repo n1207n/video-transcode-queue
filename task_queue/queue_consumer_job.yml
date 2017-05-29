@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-task-queue-consumer-worker-2
+spec:
+  parallelism: 2
+  template:
+    metadata:
+      name: job-task-queue-consumer-worker-2
+    spec:
+      containers:
+      - name: c
+        image: n1207n/video-transcode-queue/task_queue/consumer:dev
+      restartPolicy: OnFailure

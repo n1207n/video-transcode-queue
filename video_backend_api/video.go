@@ -1,4 +1,4 @@
-package schemas
+package main
 
 // VideoRendering represents each rendering variant from original
 type VideoRendering struct {

@@ -1,5 +1,7 @@
 FROM golang:1.8.3-alpine
 
+ENV GOBIN=/go/bin
+
 RUN apk update && apk upgrade && \
     apk add --no-cache git openssh
 
@@ -13,9 +15,7 @@ RUN go get -u github.com/golang/glog
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
 
-RUN go install github.com/n1207n/video-transcode-queue/video_backend_api/api_server
-
-WORKDIR /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
+RUN go install /go/src/github.com/n1207n/video-transcode-queue/video_backend_api/*.go
 
 ENTRYPOINT /go/bin/api_server
 

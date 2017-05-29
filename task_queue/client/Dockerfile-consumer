@@ -1,5 +1,7 @@
 FROM golang:1.8.3-alpine
 
+ENV GOBIN=/go/bin
+
 RUN apk update && apk upgrade && \
     apk add --no-cache git openssh
 
@@ -8,9 +10,7 @@ RUN go get -u github.com/golang/glog
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/task_queue
 
-RUN go install github.com/n1207n/video-transcode-queue/task_queue/consumer
-
-WORKDIR /go/src/github.com/n1207n/video-transcode-queue/task_queue
+RUN go install /go/src/github.com/n1207n/video-transcode-queue/task_queue/*.go
 
 ENTRYPOINT /go/bin/consumer
 
