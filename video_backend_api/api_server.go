@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
+	"github.com/golang/glog"
 )
 
 var (
@@ -15,7 +16,12 @@ func main() {
 	loadEnvironmentVariables()
 
 	var db *pg.DB = getDatabaseConnection()
-	createSchemas(db)
+
+	err := createSchemas(db)
+	if err != nil {
+		glog.Infoln("Failed to sync up database tables. Check the connection.")
+		panic(err)
+	}
 }
 
 // loadEnvironmentVariables loads PostgreSQL

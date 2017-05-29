@@ -22,5 +22,8 @@ spec:
           - name: REDIS_TOPIC
             value: "transcode_video"
           - name: REDIS_PASSWORD
-            value: "xtCWzoNXsC"
+            valueFrom:
+              secretKeyRef:
+                name: queue-storage-redis
+                key: redis-password
       restartPolicy: OnFailure

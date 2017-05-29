@@ -23,7 +23,7 @@ spec:
           image: n1207n/video-transcode-queue/video_backend_api:dev
           imagePullPolicy: Never
 
-          command: ["bash"]
+          command: ["ash"]
           args: ["-c", "/go/bin/api_server"]
 
           ports:
@@ -38,6 +38,9 @@ spec:
             - name: PGUSER
               value: video_app
             - name: PGPASSWORD
-              value: video_app
+              valueFrom:
+                secretKeyRef:
+                  name: app-database-postgresql
+                  key: postgres-password
             - name: PGHOST
-              value: video_app
+              value: app-database-postgresql:5432
