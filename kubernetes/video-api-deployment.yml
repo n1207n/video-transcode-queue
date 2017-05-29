@@ -44,3 +44,8 @@ spec:
                   key: postgres-password
             - name: PGHOST
               value: app-database-postgresql:5432
+            - name: QUEUE_TOPIC
+              valueFrom:
+                secretKeyRef:
+                  name: redis-queue-info
+                  key: queue-topic
