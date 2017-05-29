@@ -14,7 +14,11 @@ A sample infrastructure for processing video upload & transcoding.
 ### How to run locally
 1. Install Docker, Kubernetes, Minikube, and helm package manager
 2. Install redis message broker via helm
-  * `helm install -f task_queue/queue_storage_config.yml --name=queue-storage --namespace dev-cluster-1 stable/redis`
-3. Run minikube and kubectl proxy
+  * `bash create helm_releases.sh`
+3. Build docker images
+ - `bash build_docker_images.sh`
+4. Run Kubernetes resources
+ - TODO
+4. Run minikube and kubectl proxy
   * `minikube start`
   * `kubectl proxy`
