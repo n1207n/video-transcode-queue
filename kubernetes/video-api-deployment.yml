@@ -27,7 +27,7 @@ spec:
           args: ["-c", "/go/bin/api_server"]
 
           ports:
-            - containerPort: 8000
+            - containerPort: 8080
               name: video-api
 
           env:

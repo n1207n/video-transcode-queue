@@ -7,9 +7,9 @@ server {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
       {% if VIDEO_API_SERVICE_HOST is defined %}
-      proxy_pass http://{{ VIDEO_API_SERVICE_HOST }}:3000;
+      proxy_pass http://{{ VIDEO_API_SERVICE_HOST }}:8080;
       {% else %}
-      proxy_pass http://video_api:3000/;
+      proxy_pass http://video_api:8080/;
       {% endif %}
     }
 
