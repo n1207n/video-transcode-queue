@@ -1,12 +1,10 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -14,11 +12,6 @@ var (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	loadEnvironmentVariables()
 
 	var db *pg.DB = getDatabaseConnection()
@@ -29,9 +22,24 @@ func main() {
 // information from dotenv
 func loadEnvironmentVariables() {
 	pgDb = os.Getenv("PGDB")
+	if len(pgDb) == 0 {
+		panic("No PGDB environment variable")
+	}
+
 	pgUser = os.Getenv("PGUSER")
+	if len(pgUser) == 0 {
+		panic("No PGUSER environment variable")
+	}
+
 	pgPassword = os.Getenv("PGPASSWORD")
+	if len(pgPassword) == 0 {
+		panic("No PGPASSWORD environment variable")
+	}
+
 	pgHost = os.Getenv("PGHOST")
+	if len(pgHost) == 0 {
+		panic("No PGHOST environment variable")
+	}
 }
 
 // getDatabaseConnection returns an instance
