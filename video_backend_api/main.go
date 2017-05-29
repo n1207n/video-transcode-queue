@@ -50,7 +50,7 @@ func getDatabaseConnection() *pg.DB {
 // createSchemas creates a set of database tables
 // from Go struct classes
 func createSchemas(db *pg.DB) error {
-	for _, model := range []interface{}{&Video{}} {
+	for _, model := range []interface{}{&VideoRendering{}, &Video{}} {
 		err := db.CreateTable(model, &orm.CreateTableOptions{
 			IfNotExists: true,
 		})
