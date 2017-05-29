@@ -10,6 +10,7 @@ import (
 
 var (
 	pgDb, pgUser, pgPassword, pgHost string
+	queueTopic                       string
 )
 
 func main() {
@@ -45,6 +46,11 @@ func loadEnvironmentVariables() {
 	pgHost = os.Getenv("PGHOST")
 	if len(pgHost) == 0 {
 		panic("No PGHOST environment variable")
+	}
+
+	queueTopic = os.Getenv("QUEUE_TOPIC")
+	if len(queueTopic) == 0 {
+		panic("No QUEUE_TOPIC environment variable")
 	}
 }
 

@@ -12,11 +12,9 @@ import (
 )
 
 var (
-	redisURL, redisPort, redisPassword string
-	redisProtocol                      = "tcp"
-	// TODO: Make below variables as a CLI argument
-	redisTopic      = "transcode_video"
-	redisNetworkTag = "transcode_task_consume"
+	redisURL, redisPort, redisPassword, redisTopic string
+	redisProtocol                                  = "tcp"
+	redisNetworkTag                                = "transcode_task_consume"
 
 	// TODO: Make below variables as a CLI argument
 	queueFetchInterval            = 10
@@ -85,6 +83,11 @@ func loadEnvironmentVariables() {
 	redisPassword = os.Getenv("REDIS_PASSWORD")
 	if len(redisPassword) == 0 {
 		panic("No REDIS_PASSWORD environment variable")
+	}
+
+	redisTopic = os.Getenv("REDIS_TOPIC")
+	if len(redisTopic) == 0 {
+		panic("No REDIS_TOPIC environment variable")
 	}
 }
 
