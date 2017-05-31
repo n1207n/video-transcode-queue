@@ -42,7 +42,7 @@ func transcodeVideo(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Failed to open a video file: %s for Video ID %s", request.Path, request.VideoID)})
 		} else {
-			c.JSON(http.StatusAccepted, gin.H{"video_id": request.VideoID})
+			c.JSON(http.StatusOK, gin.H{"video_id": request.VideoID, "transcoded_list": transcodedFilePaths})
 		}
 	}
 }
@@ -83,7 +83,9 @@ func performTranscoding(filePath string) (transcodedFilePaths []string, transcod
 	if err != nil {
 		transcodeError = err
 	} else {
-		avutil.CopyFile(outfile, trans)
+		avutil.CopyFile(outfile, transcode_demuxer)
+
+		transcodedFilePaths = append(transcodedFilePaths, "output.ts")
 
 		outfile.Close()
 		infile.Close()
