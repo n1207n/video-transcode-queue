@@ -226,13 +226,10 @@ ENV GOBIN=/go/bin
 
 RUN apk add --no-cache git
 
-RUN go get -u github.com/go-pg/pg
 RUN go get -u github.com/satori/go.uuid
-RUN go get -u github.com/jmoiron/sqlx
-RUN go get -u github.com/jmoiron/sqlx/types
-RUN go get -u github.com/joho/godotenv
 RUN go get -u github.com/golang/glog
 RUN go get -u gopkg.in/gin-gonic/gin.v1
+RUN go get -u github.com/nareix/joy4
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
 
@@ -240,4 +237,4 @@ RUN go install /go/src/github.com/n1207n/video-transcode-queue/transcoder_servic
 
 ENTRYPOINT /go/bin/transcode_api_server
 
-EXPOSE 8080
+EXPOSE 8800

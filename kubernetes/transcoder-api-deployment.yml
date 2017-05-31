@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+
+kind: Deployment
+
+metadata:
+  name: transcoder-api
+  labels:
+    name: transcoder-api
+    tier: backend
+
+spec:
+  replicas: 1
+
+  template:
+    metadata:
+      labels:
+        name: transcoder-api
+        tier: backend
+
+    spec:
+      containers:
+        - name: transcoder-api
+          image: n1207n/video-transcode-queue/transcoder_service:dev
+          imagePullPolicy: Never
+
+          command: ["ash"]
+          args: ["-c", "/go/bin/transcode_api_server"]
+
+          ports:
+            - containerPort: 8800
+              name: transcoder-api
+
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
