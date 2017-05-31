@@ -215,7 +215,7 @@ RUN \
 # cleanup
         cd && \
         apk del ${buildDeps} && \
-	rm -rf /var/cache/apk/* /usr/local/include && \
+	      rm -rf /var/cache/apk/* && \
         ffmpeg -buildconf
 
 # Let's make sure the app built correctly
@@ -232,7 +232,15 @@ RUN go get -u gopkg.in/gin-gonic/gin.v1
 RUN go get -u github.com/nareix/joy4
 RUN go get -u github.com/nareix/bits
 
+RUN mkdir -p /home/dev/lib
+
+ENV CGO_LDFLAGS="-L${SRC}/lib -lavcodec -lavformat -lavutil -lswscale -lswresample -lavdevice -lavfilter"
+ENV CGO_CFLAGS="-I${SRC}/include"
+ENV LD_LIBRARY_PATH=/home/dev/lib
+
 ADD . /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
+
+RUN go build /go/src/github.com/n1207n/video-transcode-queue/transcoder_service/*.go
 
 RUN go install /go/src/github.com/n1207n/video-transcode-queue/transcoder_service/*.go
 
