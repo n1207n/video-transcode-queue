@@ -112,7 +112,30 @@ func getVideoDetail(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
+	var video *Video
 
+	if err := c.BindJSON(&video); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	err := connection.Insert(&video)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"title":   video.Title,
+		"message": "Object created. Please upload the file for this Video.",
+	})
 }
 
 func uploadVideoFile(c *gin.Context) {
