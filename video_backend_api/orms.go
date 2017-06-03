@@ -20,7 +20,7 @@ func GetVideoObjects(connection *pg.DB) (int, []*Video, error) {
 }
 
 // GetVideoObject returns a Video object from given id from database
-func GetVideoObject(videoID int, connection *pg.DB) (*Video, error) {
+func GetVideoObject(videoID string, connection *pg.DB) (*Video, error) {
 	var video *Video
 	var dbError error
 
@@ -28,9 +28,9 @@ func GetVideoObject(videoID int, connection *pg.DB) (*Video, error) {
 		connection.Close()
 	}()
 
-	err := connection.Model(&video).
+	err := connection.Model(&Video{}).
 		Where("id = ?", videoID).
-		Select()
+		Select(video)
 	if err != nil {
 		dbError = err
 	}

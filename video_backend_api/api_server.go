@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/golang/glog"
 	"gopkg.in/gin-gonic/gin.v1"
@@ -60,7 +59,7 @@ func startAPIServer() {
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	v1 := router.Group("/v1")
+	v1 := router.Group("/api/v1")
 	{
 		v1.GET("/videos", getVideoList)
 		v1.GET("/videos/:id", getVideoDetail)
@@ -89,14 +88,7 @@ func getVideoList(c *gin.Context) {
 }
 
 func getVideoDetail(c *gin.Context) {
-	videoID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-
-		return
-	}
+	videoID := c.Param("id")
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	video, err := GetVideoObject(videoID, connection)

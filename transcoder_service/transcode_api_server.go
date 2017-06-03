@@ -18,7 +18,7 @@ func startAPIServer() {
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	v1 := router.Group("/v1")
+	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/video-transcode", transcodeVideo)
 	}
