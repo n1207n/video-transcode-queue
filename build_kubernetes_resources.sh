@@ -7,6 +7,6 @@ kubectl create -f kubernetes/transcoder-api-deployment.yml
 kubectl create -f kubernetes/transcoder-api-service.yml
 
 kubectl create -f kubernetes/nginx-deployment.yml
-kubectl create -f kubernetes/nginx-service.yml
+kubectl expose deployment nginx-proxy --type=NodePort
 
 kubectl create -f kubernetes/queue-consumer-job.yml

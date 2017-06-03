@@ -22,7 +22,7 @@ export CGO_CFLAGS="-I$FFMPEG_ROOT/include"
 export LD_LIBRARY_PATH=$HOME/ffmpeg/lib`
 2. `helm init && helm repo update`
 3. Install helm packages
-  * `bash create helm_releases.sh`
+  * `bash build_helm_packages.sh`
 4. Build docker images
  - `eval $(minikube docker-env)`
  - `bash build_docker_images.sh`
@@ -31,3 +31,5 @@ export LD_LIBRARY_PATH=$HOME/ffmpeg/lib`
 6. Run minikube and kubectl proxy
   * `minikube start`
   * `kubectl proxy`
+7, Access minikube external url
+  * `minikube service nginx-proxy --url`
