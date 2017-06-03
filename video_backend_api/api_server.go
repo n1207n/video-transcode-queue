@@ -5,8 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
 	"github.com/golang/glog"
 	"gopkg.in/gin-gonic/gin.v1"
 )
@@ -19,7 +17,7 @@ var (
 func main() {
 	loadEnvironmentVariables()
 
-	err := createSchemas()
+	err := CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
 	if err != nil {
 		glog.Infoln("Failed to sync up database tables. Check the connection.")
 		panic(err)
@@ -57,41 +55,6 @@ func loadEnvironmentVariables() {
 	}
 }
 
-// getDatabaseConnection returns an instance
-// as a database connection
-func getDatabaseConnection() *pg.DB {
-	db := pg.Connect(&pg.Options{
-		User:     pgUser,
-		Password: pgPassword,
-		Database: pgDb,
-		Addr:     pgHost,
-	})
-
-	return db
-}
-
-// createSchemas creates a set of database tables
-// from Go struct classes
-func createSchemas() error {
-	var db *pg.DB = getDatabaseConnection()
-
-	defer func() {
-		db.Close()
-	}()
-
-	for _, model := range []interface{}{&VideoRendering{}, &Video{}} {
-		err := db.CreateTable(model, &orm.CreateTableOptions{
-			IfNotExists: true,
-		})
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func startAPIServer() {
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
@@ -110,7 +73,8 @@ func startAPIServer() {
 }
 
 func getVideoList(c *gin.Context) {
-	count, videos, err := GetVideoObjects()
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	count, videos, err := GetVideoObjects(connection)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -126,8 +90,16 @@ func getVideoList(c *gin.Context) {
 
 func getVideoDetail(c *gin.Context) {
 	videoID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 
-	video, err := GetVideoObject(videoID)
+		return
+	}
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err := GetVideoObject(videoID, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
