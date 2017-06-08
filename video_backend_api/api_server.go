@@ -104,7 +104,7 @@ func getVideoDetail(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
-	var video *VideoCreate
+	var video *Video
 
 	if err := c.BindJSON(&video); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

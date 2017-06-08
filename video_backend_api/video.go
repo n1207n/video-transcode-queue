@@ -4,7 +4,7 @@ package main
 type VideoRendering struct {
 	tableName struct{} `sql:"video_renderings, alias:video_rendering"`
 
-	ID             string `json:"id"`
+	ID             uint   `json:"id"`
 	RenderingTitle string `sql:",notnull",json:"rendering_title"`
 
 	FilePath string `sql:",notnull",json:"file_path"`
@@ -21,15 +21,9 @@ type VideoRendering struct {
 type Video struct {
 	tableName struct{} `sql:"videos, alias:video"`
 
-	ID             string `json:"id"`
+	ID             uint   `json:"id"`
 	Title          string `sql:",notnull",json:"title"`
 	IsReadyToServe bool   `sql:",notnull",json:"is_ready_to_serve"`
 
 	Renders []*VideoRendering
-}
-
-// VideoCreate represents a video instance to upload
-type VideoCreate struct {
-	tableName struct{} `sql:"videos, alias:video"`
-	Title     string   `sql:",notnull",json:"title"`
 }

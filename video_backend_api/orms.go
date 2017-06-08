@@ -39,7 +39,7 @@ func GetVideoObject(videoID string, connection *pg.DB) (*Video, error) {
 }
 
 // CreateVideoObject pushes Video object to database
-func CreateVideoObject(video *VideoCreate, connection *pg.DB) (*VideoCreate, error) {
+func CreateVideoObject(video *Video, connection *pg.DB) (*Video, error) {
 	var dbError error
 
 	defer func() {
