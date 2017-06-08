@@ -104,7 +104,7 @@ func getVideoDetail(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
-	var video *Video
+	var video *VideoCreate
 
 	if err := c.BindJSON(&video); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -115,7 +115,7 @@ func createVideo(c *gin.Context) {
 	}
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	err := connection.Insert(&video)
+	video, err := CreateVideoObject(video, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),

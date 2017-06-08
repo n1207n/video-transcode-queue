@@ -27,3 +27,9 @@ type Video struct {
 
 	Renders []*VideoRendering
 }
+
+// VideoCreate represents a video instance to upload
+type VideoCreate struct {
+	tableName struct{} `sql:"videos, alias:video"`
+	Title     string   `sql:",notnull",json:"title"`
+}

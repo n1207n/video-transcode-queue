@@ -37,3 +37,19 @@ func GetVideoObject(videoID string, connection *pg.DB) (*Video, error) {
 
 	return video, dbError
 }
+
+// CreateVideoObject pushes Video object to database
+func CreateVideoObject(video *VideoCreate, connection *pg.DB) (*VideoCreate, error) {
+	var dbError error
+
+	defer func() {
+		connection.Close()
+	}()
+
+	err := connection.Insert(&video)
+	if err != nil {
+		dbError = err
+	}
+
+	return video, dbError
+}
