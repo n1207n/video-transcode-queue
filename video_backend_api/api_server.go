@@ -104,9 +104,9 @@ func getVideoDetail(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
-	var video *Video
+	var videoSerializer *VideoCreateAPISerializer
 
-	if err := c.BindJSON(&video); err != nil {
+	if err := c.BindJSON(&videoSerializer); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -115,7 +115,7 @@ func createVideo(c *gin.Context) {
 	}
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	video, err := CreateVideoObject(video, connection)
+	videoSerializer, err := CreateVideoObject(videoSerializer, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -125,7 +125,7 @@ func createVideo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"title":   video.Title,
+		"title":   videoSerializer.Title,
 		"message": "Object created. Please upload the file for this Video.",
 	})
 }

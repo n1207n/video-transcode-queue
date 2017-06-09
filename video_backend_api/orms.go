@@ -39,17 +39,17 @@ func GetVideoObject(videoID string, connection *pg.DB) (*Video, error) {
 }
 
 // CreateVideoObject pushes Video object to database
-func CreateVideoObject(video *Video, connection *pg.DB) (*Video, error) {
+func CreateVideoObject(videoSerializer *VideoCreateAPISerializer, connection *pg.DB) (*VideoCreateAPISerializer, error) {
 	var dbError error
 
 	defer func() {
 		connection.Close()
 	}()
 
-	err := connection.Insert(&video)
+	err := connection.Insert(&videoSerializer)
 	if err != nil {
 		dbError = err
 	}
 
-	return video, dbError
+	return videoSerializer, dbError
 }

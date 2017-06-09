@@ -1,5 +1,18 @@
 package main
 
+// Video represents an uploaded video instance
+// Relation:
+// - has many VideoRendering
+type Video struct {
+	tableName struct{} `sql:"videos, alias:video"`
+
+	ID             uint   `json:"id"`
+	Title          string `sql:",notnull",json:"title"`
+	IsReadyToServe bool   `sql:",notnull",json:"is_ready_to_serve"`
+
+	Renders []*VideoRendering
+}
+
 // VideoRendering represents each rendering variant from original
 type VideoRendering struct {
 	tableName struct{} `sql:"video_renderings, alias:video_rendering"`
@@ -13,17 +26,12 @@ type VideoRendering struct {
 	Height   uint   `sql:",notnull",json:"height"`
 
 	VideoID int
+	Video   *Video
 }
 
-// Video represents an uploaded video instance
-// Relation:
-// - has many VideoRendering
-type Video struct {
+// VideoCreateAPISerializer represents a video instance to create
+type VideoCreateAPISerializer struct {
 	tableName struct{} `sql:"videos, alias:video"`
 
-	ID             uint   `json:"id"`
-	Title          string `sql:",notnull",json:"title"`
-	IsReadyToServe bool   `sql:",notnull",json:"is_ready_to_serve"`
-
-	Renders []*VideoRendering
+	Title string `json:"title"`
 }
