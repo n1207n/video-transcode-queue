@@ -231,7 +231,8 @@ RUN go get -u github.com/golang/glog
 RUN go get -u gopkg.in/gin-gonic/gin.v1
 RUN go get -u github.com/nareix/joy4
 RUN go get -u github.com/nareix/bits
-RUN go get -u github.com/go-pg/pg
+RUN go get -u github.com/jinzhu/gorm
+RUN go get -u github.com/jinzhu/gorm/dialects/postgres
 
 RUN mkdir -p /home/dev/lib
 

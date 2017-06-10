@@ -1,54 +1,48 @@
 package main
 
-import "github.com/go-pg/pg"
+import "github.com/jinzhu/gorm"
 
 // GetVideoObjects returns a list of Video objects and its count from database
-func GetVideoObjects(connection *pg.DB) (int, []*Video, error) {
+func GetVideoObjects(connection *gorm.DB) (uint, []*Video, error) {
 	var videos []*Video
+	var count uint
 	var dbError error
 
-	defer func() {
-		connection.Close()
-	}()
+	defer connection.Close()
 
-	count, err := connection.Model(&videos).Order("id DESC").SelectAndCount()
-	if err != nil {
-		dbError = err
+	connection.Find(&videos).Count(&count)
+	if connection.Error != nil {
+		dbError = connection.Error
 	}
 
 	return count, videos, dbError
 }
 
 // GetVideoObject returns a Video object from given id from database
-func GetVideoObject(videoID string, connection *pg.DB) (*Video, error) {
+func GetVideoObject(videoID int, connection *gorm.DB) (*Video, error) {
 	var video *Video
 	var dbError error
 
-	defer func() {
-		connection.Close()
-	}()
+	defer connection.Close()
 
-	err := connection.Model(&Video{}).
-		Where("id = ?", videoID).
-		Select(video)
-	if err != nil {
-		dbError = err
+	connection.First(&video, videoID)
+	if connection.Error != nil {
+		dbError = connection.Error
 	}
 
 	return video, dbError
 }
 
 // CreateVideoObject pushes Video object to database
-func CreateVideoObject(videoSerializer *VideoCreateAPISerializer, connection *pg.DB) (*VideoCreateAPISerializer, error) {
+func CreateVideoObject(videoSerializer *Video, connection *gorm.DB) (*Video, error) {
 	var dbError error
 
-	defer func() {
-		connection.Close()
-	}()
+	defer connection.Close()
 
-	err := connection.Insert(&videoSerializer)
-	if err != nil {
-		dbError = err
+	connection.NewRecord(videoSerializer)
+	connection.Create(&videoSerializer)
+	if connection.Error != nil {
+		dbError = connection.Error
 	}
 
 	return videoSerializer, dbError

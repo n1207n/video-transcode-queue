@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 	"os"
+	"strconv"
 
-	"github.com/golang/glog"
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
@@ -15,13 +15,7 @@ var (
 
 func main() {
 	loadEnvironmentVariables()
-
-	err := CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
-	if err != nil {
-		glog.Infoln("Failed to sync up database tables. Check the connection.")
-		panic(err)
-	}
-
+	CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
 	startAPIServer()
 }
 
@@ -88,7 +82,7 @@ func getVideoList(c *gin.Context) {
 }
 
 func getVideoDetail(c *gin.Context) {
-	videoID := c.Param("id")
+	videoID, err := strconv.Atoi(c.Param("id"))
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	video, err := GetVideoObject(videoID, connection)
@@ -104,7 +98,7 @@ func getVideoDetail(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
-	var videoSerializer *VideoCreateAPISerializer
+	var videoSerializer *Video
 
 	if err := c.BindJSON(&videoSerializer); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
