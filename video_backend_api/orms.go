@@ -1,10 +1,14 @@
 package main
 
-import "github.com/jinzhu/gorm"
+import (
+	"fmt"
+
+	"github.com/jinzhu/gorm"
+)
 
 // GetVideoObjects returns a list of Video objects and its count from database
-func GetVideoObjects(connection *gorm.DB) (uint, []*Video, error) {
-	var videos []*Video
+func GetVideoObjects(connection *gorm.DB) (uint, []Video, error) {
+	var videos []Video
 	var count uint
 	var dbError error
 
@@ -19,22 +23,26 @@ func GetVideoObjects(connection *gorm.DB) (uint, []*Video, error) {
 }
 
 // GetVideoObject returns a Video object from given id from database
-func GetVideoObject(videoID int, connection *gorm.DB) (*Video, error) {
-	var video *Video
+func GetVideoObject(videoID int, connection *gorm.DB) (Video, error) {
+	var video Video
 	var dbError error
 
 	defer connection.Close()
 
-	connection.First(&video, videoID)
+	fmt.Println(video)
+
+	connection.Where(map[string]interface{}{"id": videoID}).First(&video)
 	if connection.Error != nil {
 		dbError = connection.Error
 	}
+
+	fmt.Println(video)
 
 	return video, dbError
 }
 
 // CreateVideoObject pushes Video object to database
-func CreateVideoObject(videoSerializer *Video, connection *gorm.DB) (*Video, error) {
+func CreateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error) {
 	var dbError error
 
 	defer connection.Close()
