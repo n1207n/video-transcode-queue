@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
@@ -36,7 +37,9 @@ func GetVideoObject(videoID int, connection *gorm.DB) (Video, error) {
 		dbError = connection.Error
 	}
 
-	fmt.Println(video)
+	if video.ID == 0 {
+		dbError = errors.New("no video found")
+	}
 
 	return video, dbError
 }
