@@ -1,0 +1,15 @@
+kind: PersistentVolume
+apiVersion: v1
+
+metadata:
+  name: video-upload-minikube-pv-volume
+  labels:
+    type: local
+
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/video_uploads"

@@ -1,0 +1,13 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: video-upload-minikube-pv-volume-claim
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  volumeName: video-upload-minikube-pv-volume

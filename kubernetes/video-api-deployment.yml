@@ -18,6 +18,11 @@ spec:
         tier: backend
 
     spec:
+      volumes:
+      - name: video-upload-minikube-pv-volume
+        persistentVolumeClaim:
+          claimName: video-upload-minikube-pv-volume-claim
+
       containers:
         - name: video-api
           image: n1207n/video-transcode-queue/video_backend_api:dev
@@ -49,3 +54,5 @@ spec:
                 secretKeyRef:
                   name: redis-queue-info
                   key: queue-topic
+            - name: UPLOAD_FOLDER_PATH
+              value: /data/video_uploads/
