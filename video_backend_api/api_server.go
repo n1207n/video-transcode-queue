@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -133,12 +134,26 @@ func createVideo(c *gin.Context) {
 }
 
 func uploadVideoFile(c *gin.Context) {
+	// Setting the maximum form data size for big file upload
+	c.Request.ParseMultipartForm(64 << 25)
+
+	videoID := c.Request.FormValue("video_id")
+	if videoID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "video_id is required",
+		})
+
+		return
+	}
+
 	file, header, err := c.Request.FormFile("upload")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
 			"message": "Please upload file with 'upload' form field key.",
 		})
+
+		return
 	}
 
 	filename := header.Filename
@@ -152,5 +167,16 @@ func uploadVideoFile(c *gin.Context) {
 	_, err = io.Copy(outFile, file)
 	if err != nil {
 		glog.Fatalln("Failed to copy video file:", err)
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "File upload is having issues right now. Please try later.",
+		})
+
+		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Video file uploaded. Transcoding now: %s", videoID),
+	})
 }
