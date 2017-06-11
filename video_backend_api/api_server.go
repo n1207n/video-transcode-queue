@@ -1,16 +1,19 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/golang/glog"
 
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
 var (
 	pgDb, pgUser, pgPassword, pgHost string
-	queueTopic                       string
+	queueTopic, uploadFolderPath     string
 )
 
 func main() {
@@ -45,6 +48,11 @@ func loadEnvironmentVariables() {
 	queueTopic = os.Getenv("QUEUE_TOPIC")
 	if len(queueTopic) == 0 {
 		panic("No QUEUE_TOPIC environment variable")
+	}
+
+	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
+	if len(uploadFolderPath) == 0 {
+		panic("No UPLOAD_FOLDER_PATH environment variable")
 	}
 }
 
@@ -125,5 +133,24 @@ func createVideo(c *gin.Context) {
 }
 
 func uploadVideoFile(c *gin.Context) {
+	file, header, err := c.Request.FormFile("upload")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "Please upload file with 'upload' form field key.",
+		})
+	}
 
+	filename := header.Filename
+	outFile, err := os.Create(uploadFolderPath + filename)
+	if err != nil {
+		glog.Fatalln("Failed to write filesystem:", err)
+	}
+
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, file)
+	if err != nil {
+		glog.Fatalln("Failed to copy video file:", err)
+	}
 }
