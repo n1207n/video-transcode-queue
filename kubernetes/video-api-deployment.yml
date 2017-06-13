@@ -53,10 +53,19 @@ spec:
                   key: postgres-password
             - name: PGHOST
               value: app-database-postgresql:5432
-            - name: QUEUE_TOPIC
+            - name: REDIS_URL
+              value: "queue-storage-redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_TOPIC
               valueFrom:
                 secretKeyRef:
                   name: redis-queue-info
                   key: queue-topic
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: queue-storage-redis
+                  key: redis-password
             - name: UPLOAD_FOLDER_PATH
               value: /data/video_uploads/

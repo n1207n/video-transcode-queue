@@ -8,10 +8,20 @@ spec:
     metadata:
       name: job-task-queue-consumer-worker-2
     spec:
+      volumes:
+      - name: video-upload-minikube-pv-volume
+        persistentVolumeClaim:
+          claimName: video-upload-minikube-pv-volume-claim
+
       containers:
       - name: c
         image: n1207n/video-transcode-queue/task_queue/consumer:dev
         imagePullPolicy: Never
+
+        volumeMounts:
+          - mountPath: "/data/video_uploads/"
+            name: video-upload-minikube-pv-volume
+
         env:
           - name: GET_HOSTS_FROM
             value: dns
@@ -29,4 +39,7 @@ spec:
               secretKeyRef:
                 name: queue-storage-redis
                 key: redis-password
+          - name: UPLOAD_FOLDER_PATH
+            value: /data/video_uploads/
+
       restartPolicy: OnFailure

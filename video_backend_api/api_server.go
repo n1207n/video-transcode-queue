@@ -1,20 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/adjust/rmq"
 	"github.com/golang/glog"
 
 	"gopkg.in/gin-gonic/gin.v1"
+	redis "gopkg.in/redis.v3"
 )
 
 var (
-	pgDb, pgUser, pgPassword, pgHost string
-	queueTopic, uploadFolderPath     string
+	pgDb, pgUser, pgPassword, pgHost               string
+	uploadFolderPath                               string
+	redisURL, redisPort, redisPassword, redisTopic string
+	redisProtocol                                  = "tcp"
+	redisNetworkTag                                = "transcode_task_consume"
 )
 
 func main() {
@@ -46,15 +53,46 @@ func loadEnvironmentVariables() {
 		panic("No PGHOST environment variable")
 	}
 
-	queueTopic = os.Getenv("QUEUE_TOPIC")
-	if len(queueTopic) == 0 {
-		panic("No QUEUE_TOPIC environment variable")
-	}
-
 	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
 	if len(uploadFolderPath) == 0 {
 		panic("No UPLOAD_FOLDER_PATH environment variable")
 	}
+
+	redisURL = os.Getenv("REDIS_URL")
+	if len(redisURL) == 0 {
+		panic("No REDIS_URL environment variable")
+	}
+
+	redisPort = os.Getenv("REDIS_PORT")
+	if len(redisPort) == 0 {
+		panic("No REDIS_PORT environment variable")
+	}
+
+	redisPassword = os.Getenv("REDIS_PASSWORD")
+	if len(redisPassword) == 0 {
+		panic("No REDIS_PASSWORD environment variable")
+	}
+
+	redisTopic = os.Getenv("REDIS_TOPIC")
+	if len(redisTopic) == 0 {
+		panic("No REDIS_TOPIC environment variable")
+	}
+}
+
+// openTaskQueue connects to redis and return a Queue interface
+func openTaskQueue() rmq.Queue {
+	redisClient := redis.NewClient(&redis.Options{
+		Network:  redisProtocol,
+		Addr:     fmt.Sprintf("%s:%s", redisURL, redisPort),
+		DB:       int64(1),
+		Password: redisPassword,
+	})
+
+	connection := rmq.OpenConnectionWithRedisClient(redisNetworkTag, redisClient)
+
+	glog.Infof("Connected to Redis task queue: %s\n", connection.Name)
+
+	return connection.OpenQueue(redisTopic)
 }
 
 func startAPIServer() {
@@ -174,6 +212,13 @@ func uploadVideoFile(c *gin.Context) {
 
 		return
 	}
+
+	taskQueue := openTaskQueue()
+	task := Task{ID: videoID, Timestamp: time.Now(), FilePath: uploadFolderPath + filename}
+
+	queueDataBytes, err := json.Marshal(task)
+	taskQueue.PublishBytes(queueDataBytes)
+	glog.Infoln("Queue task created...:", task)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Video file uploaded. Transcoding now: %s", videoID),

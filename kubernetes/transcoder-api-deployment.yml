@@ -18,10 +18,19 @@ spec:
         tier: backend
 
     spec:
+      volumes:
+      - name: video-upload-minikube-pv-volume
+        persistentVolumeClaim:
+          claimName: video-upload-minikube-pv-volume-claim
+
       containers:
         - name: transcoder-api
           image: n1207n/video-transcode-queue/transcoder_service:dev
           imagePullPolicy: Never
+
+          volumeMounts:
+            - mountPath: "/data/video_uploads/"
+              name: video-upload-minikube-pv-volume
 
           command: ["ash"]
           args: ["-c", "/go/bin/transcode_api_server"]
@@ -33,3 +42,6 @@ spec:
           env:
             - name: GET_HOSTS_FROM
               value: dns
+
+            - name: UPLOAD_FOLDER_PATH
+              value: /data/video_uploads/
