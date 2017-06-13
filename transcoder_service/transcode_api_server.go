@@ -2,15 +2,51 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/golang/glog"
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
+var (
+	pgDb, pgUser, pgPassword, pgHost string
+	uploadFolderPath                 string
+)
+
 func main() {
+	loadEnvironmentVariables()
 	glog.Infoln("Starting transcoder API server")
 	startAPIServer()
+}
+
+// loadEnvironmentVariables loads PostgreSQL
+// information from dotenv
+func loadEnvironmentVariables() {
+	pgDb = os.Getenv("PGDB")
+	if len(pgDb) == 0 {
+		panic("No PGDB environment variable")
+	}
+
+	pgUser = os.Getenv("PGUSER")
+	if len(pgUser) == 0 {
+		panic("No PGUSER environment variable")
+	}
+
+	pgPassword = os.Getenv("PGPASSWORD")
+	if len(pgPassword) == 0 {
+		panic("No PGPASSWORD environment variable")
+	}
+
+	pgHost = os.Getenv("PGHOST")
+	if len(pgHost) == 0 {
+		panic("No PGHOST environment variable")
+	}
+
+	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
+	if len(uploadFolderPath) == 0 {
+		panic("No UPLOAD_FOLDER_PATH environment variable")
+	}
 }
 
 func startAPIServer() {

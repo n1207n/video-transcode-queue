@@ -43,5 +43,16 @@ spec:
             - name: GET_HOSTS_FROM
               value: dns
 
+            - name: PGDB
+              value: video_app
+            - name: PGUSER
+              value: video_app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-database-postgresql
+                  key: postgres-password
+            - name: PGHOST
+              value: app-database-postgresql:5432
             - name: UPLOAD_FOLDER_PATH
               value: /data/video_uploads/
