@@ -134,10 +134,9 @@ func createVideo(c *gin.Context) {
 }
 
 func uploadVideoFile(c *gin.Context) {
-	// Setting the maximum form data size for big file upload
 	c.Request.ParseMultipartForm(64 << 25)
 
-	videoID := c.Request.FormValue("video_id")
+	videoID := c.PostForm("video_id")
 	if videoID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "video_id is required",

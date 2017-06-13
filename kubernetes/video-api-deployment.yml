@@ -28,6 +28,10 @@ spec:
           image: n1207n/video-transcode-queue/video_backend_api:dev
           imagePullPolicy: Never
 
+          volumeMounts:
+            - mountPath: "/data/video_uploads/"
+              name: video-upload-minikube-pv-volume
+
           command: ["ash"]
           args: ["-c", "/go/bin/api_server"]
 
