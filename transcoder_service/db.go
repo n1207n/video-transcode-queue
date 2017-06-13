@@ -1,41 +1,32 @@
 package main
 
 import (
-	"github.com/go-pg/pg"
-	"github.com/go-pg/pg/orm"
+	"fmt"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // GetDatabaseConnection returns an instance
 // as a database connection
-func GetDatabaseConnection(user string, password string, host string, db string) *pg.DB {
-	connection := pg.Connect(&pg.Options{
-		User:     user,
-		Password: password,
-		Database: db,
-		Addr:     host,
-	})
+func GetDatabaseConnection(user string, password string, host string, db string) *gorm.DB {
+	connection, err := gorm.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, password, host, db))
+
+	if err != nil {
+		panic(err)
+	}
 
 	return connection
 }
 
 // CreateSchemas creates a set of database tables
 // from Go struct classes
-func CreateSchemas(user string, password string, host string, db string) error {
+func CreateSchemas(user string, password string, host string, db string) {
 	connection := GetDatabaseConnection(user, password, host, db)
 
-	defer func() {
-		connection.Close()
-	}()
+	defer connection.Close()
 
-	for _, model := range []interface{}{&VideoRendering{}, &Video{}} {
-		err := connection.CreateTable(model, &orm.CreateTableOptions{
-			IfNotExists: true,
-		})
+	connection.AutoMigrate(&Video{}, &VideoRendering{})
+	connection.Model(&VideoRendering{}).AddForeignKey("video_id", "videos(id)", "CASCADE", "CASCADE")
 
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

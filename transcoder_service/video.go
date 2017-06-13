@@ -1,29 +1,43 @@
 package main
 
-// VideoRendering represents each rendering variant from original
-type VideoRendering struct {
-	tableName struct{} `sql:"video_renderings, alias:video_rendering"`
-
-	ID             string `json:"id"`
-	RenderingTitle string `sql:",notnull",json:"rendering_title"`
-
-	FilePath string `sql:",notnull",json:"file_path"`
-	URL      string `sql:",notnull",json:"url"`
-	Width    uint   `sql:",notnull",json:"width"`
-	Height   uint   `sql:",notnull",json:"height"`
-
-	VideoID int
-}
+import (
+	"fmt"
+	"time"
+)
 
 // Video represents an uploaded video instance
 // Relation:
 // - has many VideoRendering
 type Video struct {
-	tableName struct{} `sql:"videos, alias:video"`
+	ID        uint      `gorm:"primary_key" json:"id"`
+	CreatedAt time.Time `gorm:"not null" json:"created_at"`
+	UpdatedAt time.Time `gorm:"not null" json:"updated_at"`
 
-	ID             string `json:"id"`
-	Title          string `sql:",notnull",json:"title"`
-	IsReadyToServe bool   `sql:",notnull",json:"is_ready_to_serve"`
+	Title          string `gorm:"not null" json:"title" binding:"required"`
+	IsReadyToServe bool   `sql:"DEFAULT:false" json:"is_ready_to_serve"`
 
-	Renders []*VideoRendering
+	Renderings []VideoRendering
+}
+
+func (v Video) String() string {
+	return fmt.Sprintf("Video: %d - %s", v.ID, v.Title)
+}
+
+// VideoRendering represents each rendering variant from original
+type VideoRendering struct {
+	ID             uint      `gorm:"primary_key" json:"id"`
+	CreatedAt      time.Time `gorm:"not null" json:"created_at"`
+	UpdatedAt      time.Time `gorm:"not null" json:"updated_at"`
+	RenderingTitle string    `gorm:"not null" json:"rendering_title" binding:"required"`
+
+	FilePath string `gorm:"not null" json:"file_path"`
+	URL      string `gorm:"not null" json:"url"`
+	Width    uint   `gorm:"not null" json:"width"`
+	Height   uint   `gorm:"not null" json:"height"`
+
+	VideoID uint `gorm:"index;not null"`
+}
+
+func (vr VideoRendering) String() string {
+	return fmt.Sprintf("VideoRendering: %d - %s", vr.ID, vr.RenderingTitle)
 }
