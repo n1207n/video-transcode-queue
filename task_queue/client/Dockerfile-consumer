@@ -11,8 +11,13 @@ RUN go get -u gopkg.in/redis.v3
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/task_queue
 
-RUN go install /go/src/github.com/n1207n/video-transcode-queue/task_queue/*.go
 
-ENTRYPOINT /go/bin/consumer
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/task_queue
+
+RUN go build
+
+RUN go install
+
+ENTRYPOINT /go/bin/task_queue
 
 EXPOSE 6379

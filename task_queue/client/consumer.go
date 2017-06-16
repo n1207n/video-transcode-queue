@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"time"
 
@@ -15,6 +19,7 @@ var (
 	redisURL, redisPort, redisPassword, redisTopic string
 	redisProtocol                                  = "tcp"
 	redisNetworkTag                                = "transcode_task_consume"
+	transcodeServiceHost, transcodeServicePort     string
 
 	// TODO: Make below variables as a CLI argument
 	queueFetchInterval            = 10
@@ -22,6 +27,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	loadEnvironmentVariables()
 
 	taskQueue := openTaskQueue()
@@ -43,6 +49,12 @@ type TaskConsumer struct {
 	lastAccessed time.Time
 }
 
+// TranscodeRequest represents a JSON POST data for video-transcode API
+type TranscodeRequest struct {
+	Path    string `json:"path"`
+	VideoID string `json:"video_id"`
+}
+
 // Consume method implements TaskConsumer struct
 // to be registered on Queue.
 // It handles actual data handling from Queue
@@ -58,7 +70,43 @@ func (tc *TaskConsumer) Consume(delivery rmq.Delivery) {
 	}
 
 	glog.Infof("Processed task message: Transcoding %s\n", task.FilePath)
+
 	// TODO: Call Go subroutine to call go binding of ffmpeg
+	transcodeRequest := TranscodeRequest{
+		Path:    task.FilePath,
+		VideoID: task.ID,
+	}
+
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(transcodeRequest)
+
+	url := fmt.Sprintf("http://%s:%s/api/v1/video-transcode", transcodeServiceHost, transcodeServicePort)
+
+	glog.Infoln(url)
+
+	request, err := http.NewRequest("POST", url, b)
+
+	glog.Infoln(request, err)
+	if err != nil {
+		glog.Warningf("Failed to trigger transcode API: %s\n", err)
+		delivery.Reject()
+		return
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	glog.Infoln(client, response, err)
+	if err != nil {
+		glog.Warningf("Unsuccessful transcode request: %s\n", err)
+		delivery.Reject()
+		return
+	}
+
+	responseBuffer := new(bytes.Buffer)
+	io.Copy(responseBuffer, response.Body)
+
+	glog.Infof("Successful transcode request: %s\n", responseBuffer)
 	delivery.Ack()
 }
 
@@ -88,6 +136,16 @@ func loadEnvironmentVariables() {
 	redisTopic = os.Getenv("REDIS_TOPIC")
 	if len(redisTopic) == 0 {
 		panic("No REDIS_TOPIC environment variable")
+	}
+
+	transcodeServiceHost = os.Getenv("TRANSCODER_API_SERVICE_HOST")
+	if len(transcodeServiceHost) == 0 {
+		panic("No TRANSCODER_API_SERVICE_HOST environment variable")
+	}
+
+	transcodeServicePort = os.Getenv("TRANSCODER_API_SERVICE_PORT")
+	if len(transcodeServicePort) == 0 {
+		panic("No TRANSCODER_API_SERVICE_PORT environment variable")
 	}
 }
 
