@@ -33,7 +33,7 @@ spec:
               name: video-upload-minikube-pv-volume
 
           command: ["ash"]
-          args: ["-c", "/go/bin/transcode_api_server"]
+          args: ["-c", "/go/bin/transcoder_service"]
 
           ports:
             - containerPort: 8800

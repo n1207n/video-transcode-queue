@@ -33,7 +33,7 @@ spec:
               name: video-upload-minikube-pv-volume
 
           command: ["ash"]
-          args: ["-c", "/go/bin/api_server"]
+          args: ["-c", "/go/bin/video_backend_api"]
 
           ports:
             - containerPort: 8080
