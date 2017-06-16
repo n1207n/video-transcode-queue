@@ -16,8 +16,12 @@ RUN go get -u github.com/adjust/rmq
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
 
-RUN go install /go/src/github.com/n1207n/video-transcode-queue/video_backend_api/*.go
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
 
-ENTRYPOINT /go/bin/api_server
+RUN go build
+
+RUN go install
+
+ENTRYPOINT /go/bin/video_backend_api
 
 EXPOSE 8080

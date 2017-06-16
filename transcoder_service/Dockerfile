@@ -242,8 +242,12 @@ ENV LD_LIBRARY_PATH=/home/dev/lib
 
 ADD . /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
 
-RUN go install /go/src/github.com/n1207n/video-transcode-queue/transcoder_service/*.go
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
 
-ENTRYPOINT /go/bin/transcode_api_server
+RUN go build
+
+RUN go install
+
+ENTRYPOINT /go/bin/transcoder_service
 
 EXPOSE 8800

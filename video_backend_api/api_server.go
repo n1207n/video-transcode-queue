@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,6 +26,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	loadEnvironmentVariables()
 	CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
 	startAPIServer()

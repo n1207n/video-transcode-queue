@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +16,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 	loadEnvironmentVariables()
 	glog.Infoln("Starting transcoder API server")
 	startAPIServer()
