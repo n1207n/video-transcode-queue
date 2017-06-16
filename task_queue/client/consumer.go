@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,7 +26,6 @@ var (
 )
 
 func main() {
-	flag.Parse()
 	loadEnvironmentVariables()
 
 	taskQueue := openTaskQueue()
@@ -72,7 +70,7 @@ func (tc *TaskConsumer) Consume(delivery rmq.Delivery) {
 	glog.Infof("Processed task message: Transcoding %s\n", task.FilePath)
 
 	// TODO: Call Go subroutine to call go binding of ffmpeg
-	transcodeRequest := TranscodeRequest{
+	transcodeRequest := &TranscodeRequest{
 		Path:    task.FilePath,
 		VideoID: task.ID,
 	}
@@ -82,11 +80,7 @@ func (tc *TaskConsumer) Consume(delivery rmq.Delivery) {
 
 	url := fmt.Sprintf("http://%s:%s/api/v1/video-transcode", transcodeServiceHost, transcodeServicePort)
 
-	glog.Infoln(url)
-
 	request, err := http.NewRequest("POST", url, b)
-
-	glog.Infoln(request, err)
 	if err != nil {
 		glog.Warningf("Failed to trigger transcode API: %s\n", err)
 		delivery.Reject()
@@ -95,8 +89,6 @@ func (tc *TaskConsumer) Consume(delivery rmq.Delivery) {
 
 	client := &http.Client{}
 	response, err := client.Do(request)
-
-	glog.Infoln(client, response, err)
 	if err != nil {
 		glog.Warningf("Unsuccessful transcode request: %s\n", err)
 		delivery.Reject()

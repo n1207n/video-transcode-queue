@@ -62,7 +62,7 @@ func startAPIServer() {
 	}
 
 	// By default it serves on :8080
-	router.Run()
+	router.Run(":8800")
 }
 
 func transcodeVideo(c *gin.Context) {
@@ -79,8 +79,8 @@ func transcodeVideo(c *gin.Context) {
 
 // TranscodeRequest represents a JSON POST data for video-transcode API
 type TranscodeRequest struct {
-	Path    string `json:"path"`
-	VideoID string `json:"video_id"`
+	Path    string `json:"path" binding:"required"`
+	VideoID string `json:"video_id" binding:"required"`
 }
 
 func performTranscoding(filePath string) (transcodedFilePaths []string, transcodeError error) {
