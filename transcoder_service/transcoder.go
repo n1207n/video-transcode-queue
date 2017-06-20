@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/golang/glog"
 )
 
-// ExecuteFfmpegCLI executes constructed command string by os.exec.Command
-func ExecuteFfmpegCLI(commandString string) error {
+// ExecuteCLI executes constructed command string by os.exec.Command
+func ExecuteCLI(commandString string, returnOutput bool) (*bytes.Buffer, error) {
 	commandArguments := strings.Fields(commandString)
 	head, commandArguments := commandArguments[0], commandArguments[1:]
 
@@ -18,40 +22,99 @@ func ExecuteFfmpegCLI(commandString string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	outputBytes := new(bytes.Buffer)
+
 	if err := cmd.Run(); err != nil {
-		glog.Errorf("Error during transcoding: %s\nError: %s", commandString, err.Error())
-		return err
+		return outputBytes, err
 	}
 
-	return nil
+	if returnOutput != false {
+		io.Copy(cmd.Stdout, outputBytes)
+	}
+
+	return outputBytes, nil
 }
 
-// TranscodeToStandard transcodes a video file to Standard preset
-func TranscodeToStandard(videoName string, filename string, folderPath string) {
-	glog.Infof("Transcoding to Standard preset: %s\n", videoName)
+// GetVideoDimensionInfo extracts video width and height values
+func GetVideoDimensionInfo(filename string, folderPath string) (int, int) {
+	glog.Infof("Getting video resolution info: %s/%s\n", folderPath, filename)
 
-	// Standard web video
-	ffmpegCommand480Pass2 := fmt.Sprintf("ffmpeg -y -i %s/%s -codec:v libx264 -profile:v high -level 4.0 -preset slow -vf scale=640:480 -threads 0 -codec:a libfdk_aac -f mp4 %s/%s_480p.mp4", folderPath, filename, folderPath, videoName)
+	// ffprobe should return output as the below:
+	// width=1280
+	// height=720
+	ffprobeCommand := fmt.Sprintf("ffprobe -v error -show_entries stream=width,height -of default=noprint_wrappers=1 %s/%s", folderPath, filename)
 
-	ExecuteFfmpegCLI(ffmpegCommand480Pass2)
+	outputBytes, err := ExecuteCLI(ffprobeCommand, true)
+	if err != nil {
+		glog.Errorf("Error during command execution: %s\nError: %s", ffprobeCommand, err.Error())
+	}
+
+	outputString := outputBytes.String()
+	outputTokens := strings.Split(outputString, "\n")
+
+	width, _ := strconv.Atoi(strings.Split(outputTokens[0], "=")[1])
+
+	height, _ := strconv.Atoi(strings.Split(outputTokens[1], "=")[1])
+
+	return width, height
 }
 
-// TranscodeToMobile transcodes video file to Mobile preset
-func TranscodeToMobile(videoName string, filename string, folderPath string) {
-	glog.Infof("Transcoding to Mobile preset: %s\n", videoName)
+// TranscodeToSD360P transcodes video file to 360P
+func TranscodeToSD360P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+	glog.Infof("Transcoding to SD 360P: %s\n", videoName)
+	waitGroup.Add(1)
 
-	// 360p video for older mobile phones
-	ffmpegCommand360Pass2 := fmt.Sprintf("ffmpeg -y -i %s/%s -codec:v libx264 -profile:v baseline -level 3.1 -preset slow -vf scale=640:360 -threads 0 -codec:a libfdk_aac -f mp4 %s/%s_360p.mp4", folderPath, filename, folderPath, videoName)
+	ffmpegCommand360P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 400k -maxrate 400k -bufsize 400k -vf scale=-1:360 -pass 1 %s/%s_360.mp4", folderPath, filename, folderPath, videoName)
 
-	ExecuteFfmpegCLI(ffmpegCommand360Pass2)
+	_, err := ExecuteCLI(ffmpegCommand360P, false)
+	if err != nil {
+		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
+	}
+
+	waitGroup.Done()
 }
 
-// TranscodeToHighSD transcodes video file to HighSD preset
-func TranscodeToHighSD(videoName string, filename string, folderPath string) {
-	glog.Infof("Transcoding to HighSD preset: %s\n", videoName)
+// TranscodeToSD540P transcodes video file to 540P
+func TranscodeToSD540P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+	glog.Infof("Transcoding to SD 540P: %s\n", videoName)
+	waitGroup.Add(1)
 
-	// High-quality SD video for archive/storage
-	ffmpegCommand576Pass2 := fmt.Sprintf("ffmpeg -y -i %s/%s -codec:v libx264 -profile:v high -level 4.2 -preset slow -vf scale=1024:576 -threads 0 -codec:a libfdk_aac -f mp4 %s/%s_576p.mp4", folderPath, filename, folderPath, videoName)
+	ffmpegCommand540P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 800k -maxrate 800k -bufsize 500k -vf scale=-1:540 -pass 1 %s/%s_540.mp4", folderPath, filename, folderPath, videoName)
 
-	ExecuteFfmpegCLI(ffmpegCommand576Pass2)
+	_, err := ExecuteCLI(ffmpegCommand540P, false)
+	if err != nil {
+		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
+	}
+
+	waitGroup.Done()
+}
+
+// TranscodeToHD720P transcodes video file to 720P
+func TranscodeToHD720P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+	glog.Infof("Transcoding to HD 720P: %s\n", videoName)
+	waitGroup.Add(1)
+
+	ffmpegCommand720P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 1500k -maxrate 1500k -bufsize 1000k -vf scale=-1:720 -pass 1 %s/%s_720.mp4", folderPath, filename, folderPath, videoName)
+
+	_, err := ExecuteCLI(ffmpegCommand720P, false)
+	if err != nil {
+		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
+	}
+
+	waitGroup.Done()
+}
+
+// ConstructMPD creates MPD file for DASH streaming
+func ConstructMPD(videoName string, filename string, folderPath string) {
+	glog.Infof("Constructing MPD file: %s\n", videoName)
+
+	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
+
+	mp4boxCommand := fmt.Sprintf("MP4Box -dash 3000 -frag 3000 -rap -profile dashavc264:onDemand -out %s.mpd %s_360.mp4#video %s_480.mp4#video %s_576.mp4#video %s_360.mp4#audio %s_480.mp4#audio %s_576.mp4#audio", filePath, filePath, filePath, filePath, filePath, filePath, filePath)
+
+	_, err := ExecuteCLI(mp4boxCommand, false)
+	if err != nil {
+		glog.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
+	}
+
 }

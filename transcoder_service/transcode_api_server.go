@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/golang/glog"
 	"gopkg.in/gin-gonic/gin.v1"
@@ -92,9 +93,23 @@ func performTranscoding(filePath string) (transcodedFilePaths []string, transcod
 	splitFilenameCharacters := strings.Split(filename, ".")
 	videoName := strings.Join(splitFilenameCharacters[:len(splitFilenameCharacters)-1], "_")
 
-	go TranscodeToStandard(videoName, filename, fileFolderPath)
-	go TranscodeToMobile(videoName, filename, fileFolderPath)
-	go TranscodeToHighSD(videoName, filename, fileFolderPath)
+	waitGroup := new(sync.WaitGroup)
+
+	_, height := GetVideoDimensionInfo(filename, fileFolderPath)
+
+	if height < 720 {
+		go TranscodeToHD720P(videoName, filename, fileFolderPath, waitGroup)
+	}
+
+	if height < 540 {
+		go TranscodeToSD540P(videoName, filename, fileFolderPath, waitGroup)
+	}
+
+	if height < 360 {
+		go TranscodeToSD360P(videoName, filename, fileFolderPath, waitGroup)
+	}
+
+	waitGroup.Wait()
 
 	return
 }

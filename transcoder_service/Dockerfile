@@ -224,7 +224,13 @@ RUN \
 
 ENV GOBIN=/go/bin
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git jpeg-dev zlib-dev libpng-dev
+
+RUN git clone https://github.com/gpac/gpac.git
+RUN gpac/configure --static-mp4box
+RUN make -j4
+RUN make install
+RUN cp /tmp/workdir/bin/gcc/MP4Box /bin/MP4Box
 
 RUN go get -u github.com/satori/go.uuid
 RUN go get -u github.com/golang/glog
