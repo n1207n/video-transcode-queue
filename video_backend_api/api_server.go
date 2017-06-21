@@ -196,9 +196,22 @@ func uploadVideoFile(c *gin.Context) {
 	}
 
 	filename := header.Filename
-	outFile, err := os.Create(uploadFolderPath + filename)
+
+	videoFolderPath := uploadFolderPath + videoID
+	os.MkdirAll(videoFolderPath, os.ModePerm)
+
+	videoFullPath := fmt.Sprintf("%s/%s", videoFolderPath, filename)
+
+	outFile, err := os.Create(videoFullPath)
 	if err != nil {
 		glog.Fatalln("Failed to write filesystem:", err)
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "File upload is having issues right now. Please try later.",
+		})
+
+		return
 	}
 
 	defer outFile.Close()
@@ -216,7 +229,7 @@ func uploadVideoFile(c *gin.Context) {
 	}
 
 	taskQueue := openTaskQueue()
-	task := Task{ID: videoID, Timestamp: time.Now(), FilePath: uploadFolderPath + filename}
+	task := Task{ID: videoID, Timestamp: time.Now(), FilePath: videoFullPath}
 
 	queueDataBytes, err := json.Marshal(task)
 	taskQueue.PublishBytes(queueDataBytes)
