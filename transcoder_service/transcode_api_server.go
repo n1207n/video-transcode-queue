@@ -101,25 +101,31 @@ func performTranscoding(transcodeRequest TranscodeRequest) (transcodedFilePaths 
 	_, height := GetVideoDimensionInfo(filename, fileFolderPath)
 
 	var transcodeTargets []int
+	dbConnectionInfo := map[string]string{
+		pgDb:       pgDb,
+		pgUser:     pgUser,
+		pgPassword: pgPassword,
+		pgHost:     pgHost,
+	}
 
 	if height < 720 {
 		transcodeTargets = append(transcodeTargets, 720)
-		go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, waitGroup)
+		go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
 	}
 
 	if height < 540 {
 		transcodeTargets = append(transcodeTargets, 540)
-		go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, waitGroup)
+		go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
 	}
 
 	if height < 360 {
 		transcodeTargets = append(transcodeTargets, 360)
-		go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, waitGroup)
+		go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
 	}
 
 	waitGroup.Wait()
 
-	ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets)
+	ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets, dbConnectionInfo)
 
 	return
 }

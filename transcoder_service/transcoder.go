@@ -61,7 +61,7 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int) {
 }
 
 // TranscodeToSD360P transcodes video file to 360P
-func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to SD 360P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -85,6 +85,11 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 		VideoID:        uint(videoID),
 	}
 
+	pgDb := dbConnectionInfo["pgDb"]
+	pgUser := dbConnectionInfo["pgUser"]
+	pgPassword := dbConnectionInfo["pgPassword"]
+	pgHost := dbConnectionInfo["pgHost"]
+
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
 
@@ -92,7 +97,7 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 }
 
 // TranscodeToSD540P transcodes video file to 540P
-func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to SD 540P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -116,6 +121,11 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 		VideoID:        uint(videoID),
 	}
 
+	pgDb := dbConnectionInfo["pgDb"]
+	pgUser := dbConnectionInfo["pgUser"]
+	pgPassword := dbConnectionInfo["pgPassword"]
+	pgHost := dbConnectionInfo["pgHost"]
+
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
 
@@ -123,7 +133,7 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 }
 
 // TranscodeToHD720P transcodes video file to 720P
-func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to HD 720P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -147,6 +157,11 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 		VideoID:        uint(videoID),
 	}
 
+	pgDb := dbConnectionInfo["pgDb"]
+	pgUser := dbConnectionInfo["pgUser"]
+	pgPassword := dbConnectionInfo["pgPassword"]
+	pgHost := dbConnectionInfo["pgHost"]
+
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
 
@@ -154,7 +169,7 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 }
 
 // ConstructMPD creates MPD file for DASH streaming
-func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int) {
+func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int, dbConnectionInfo map[string]string) {
 	glog.Infof("Constructing MPD file: %s\n", videoName)
 
 	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
@@ -176,4 +191,18 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 		glog.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
 	}
 
+	video := Video{
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		StreamFilePath: fmt.Sprintf("%s.mpd", filePath),
+		IsReadyToServe: true,
+	}
+
+	pgDb := dbConnectionInfo["pgDb"]
+	pgUser := dbConnectionInfo["pgUser"]
+	pgPassword := dbConnectionInfo["pgPassword"]
+	pgHost := dbConnectionInfo["pgHost"]
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	UpdateVideoObject(video, connection)
 }
