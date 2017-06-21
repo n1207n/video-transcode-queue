@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -72,7 +73,7 @@ func transcodeVideo(c *gin.Context) {
 	if c.BindJSON(&request) == nil {
 		// TODO: Check if video id exists in PostgreSQL
 
-		performTranscoding(request.Path)
+		performTranscoding(request)
 
 		c.JSON(http.StatusAccepted, gin.H{"video_id": request.VideoID, "status": "In progress"})
 	}
@@ -84,14 +85,16 @@ type TranscodeRequest struct {
 	VideoID string `json:"video_id" binding:"required"`
 }
 
-func performTranscoding(filePath string) (transcodedFilePaths []string, transcodeError error) {
-	splitStringPaths := strings.Split(filePath, "/")
+func performTranscoding(transcodeRequest TranscodeRequest) (transcodedFilePaths []string, transcodeError error) {
+	splitStringPaths := strings.Split(transcodeRequest.Path, "/")
 	fileFolderPath := strings.Join(splitStringPaths[:len(splitStringPaths)-1], "/")
 	filename := splitStringPaths[len(splitStringPaths)-1]
 
 	// Strip the file extension and convert any reverse subsequent dots to underscore
 	splitFilenameCharacters := strings.Split(filename, ".")
 	videoName := strings.Join(splitFilenameCharacters[:len(splitFilenameCharacters)-1], "_")
+
+	videoID, _ := strconv.Atoi(transcodeRequest.VideoID)
 
 	waitGroup := new(sync.WaitGroup)
 
@@ -101,22 +104,22 @@ func performTranscoding(filePath string) (transcodedFilePaths []string, transcod
 
 	if height < 720 {
 		transcodeTargets = append(transcodeTargets, 720)
-		go TranscodeToHD720P(videoName, filename, fileFolderPath, waitGroup)
+		go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, waitGroup)
 	}
 
 	if height < 540 {
 		transcodeTargets = append(transcodeTargets, 540)
-		go TranscodeToSD540P(videoName, filename, fileFolderPath, waitGroup)
+		go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, waitGroup)
 	}
 
 	if height < 360 {
 		transcodeTargets = append(transcodeTargets, 360)
-		go TranscodeToSD360P(videoName, filename, fileFolderPath, waitGroup)
+		go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, waitGroup)
 	}
 
 	waitGroup.Wait()
 
-	ConstructMPD(videoName, filename, fileFolderPath, transcodeTargets)
+	ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets)
 
 	return
 }

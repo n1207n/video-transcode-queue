@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -60,7 +61,7 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int) {
 }
 
 // TranscodeToSD360P transcodes video file to 360P
-func TranscodeToSD360P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to SD 360P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -71,11 +72,27 @@ func TranscodeToSD360P(videoName string, filename string, folderPath string, wai
 		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
 	}
 
+	width, height := GetVideoDimensionInfo(filename, folderPath)
+
+	videoRendering := VideoRendering{
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		RenderingTitle: fmt.Sprintf("%s_360", videoName),
+		FilePath:       fmt.Sprintf("%s/%s_360.mp4", folderPath, videoName),
+		URL:            fmt.Sprintf("%s/%s_360.mp4", folderPath, videoName),
+		Width:          uint(width),
+		Height:         uint(height),
+		VideoID:        uint(videoID),
+	}
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	CreateVideoRenderingObject(videoRendering, connection)
+
 	waitGroup.Done()
 }
 
 // TranscodeToSD540P transcodes video file to 540P
-func TranscodeToSD540P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to SD 540P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -86,11 +103,27 @@ func TranscodeToSD540P(videoName string, filename string, folderPath string, wai
 		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
 	}
 
+	width, height := GetVideoDimensionInfo(filename, folderPath)
+
+	videoRendering := VideoRendering{
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		RenderingTitle: fmt.Sprintf("%s_540", videoName),
+		FilePath:       fmt.Sprintf("%s/%s_540.mp4", folderPath, videoName),
+		URL:            fmt.Sprintf("%s/%s_540.mp4", folderPath, videoName),
+		Width:          uint(width),
+		Height:         uint(height),
+		VideoID:        uint(videoID),
+	}
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	CreateVideoRenderingObject(videoRendering, connection)
+
 	waitGroup.Done()
 }
 
 // TranscodeToHD720P transcodes video file to 720P
-func TranscodeToHD720P(videoName string, filename string, folderPath string, waitGroup *sync.WaitGroup) {
+func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, waitGroup *sync.WaitGroup) {
 	glog.Infof("Transcoding to HD 720P: %s\n", videoName)
 	waitGroup.Add(1)
 
@@ -101,11 +134,27 @@ func TranscodeToHD720P(videoName string, filename string, folderPath string, wai
 		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
 	}
 
+	width, height := GetVideoDimensionInfo(filename, folderPath)
+
+	videoRendering := VideoRendering{
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		RenderingTitle: fmt.Sprintf("%s_720", videoName),
+		FilePath:       fmt.Sprintf("%s/%s_720.mp4", folderPath, videoName),
+		URL:            fmt.Sprintf("%s/%s_720.mp4", folderPath, videoName),
+		Width:          uint(width),
+		Height:         uint(height),
+		VideoID:        uint(videoID),
+	}
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	CreateVideoRenderingObject(videoRendering, connection)
+
 	waitGroup.Done()
 }
 
 // ConstructMPD creates MPD file for DASH streaming
-func ConstructMPD(videoName string, filename string, folderPath string, transcodeTargets []int) {
+func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int) {
 	glog.Infof("Constructing MPD file: %s\n", videoName)
 
 	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
