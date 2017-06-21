@@ -192,7 +192,6 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 	}
 
 	video := Video{
-		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		StreamFilePath: fmt.Sprintf("%s.mpd", filePath),
 		IsReadyToServe: true,
