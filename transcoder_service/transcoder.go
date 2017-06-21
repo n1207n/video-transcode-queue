@@ -105,12 +105,22 @@ func TranscodeToHD720P(videoName string, filename string, folderPath string, wai
 }
 
 // ConstructMPD creates MPD file for DASH streaming
-func ConstructMPD(videoName string, filename string, folderPath string) {
+func ConstructMPD(videoName string, filename string, folderPath string, transcodeTargets []int) {
 	glog.Infof("Constructing MPD file: %s\n", videoName)
 
 	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
 
-	mp4boxCommand := fmt.Sprintf("MP4Box -dash 3000 -frag 3000 -rap -profile dashavc264:onDemand -out %s.mpd %s_360.mp4#video %s_480.mp4#video %s_576.mp4#video %s_360.mp4#audio %s_480.mp4#audio %s_576.mp4#audio", filePath, filePath, filePath, filePath, filePath, filePath, filePath)
+	mp4boxCommand := fmt.Sprintf("MP4Box -dash 3000 -frag 3000 -rap -profile dashavc264:onDemand -out %s.mpd", filePath)
+
+	// Appending video streams for each transcoded size
+	for resize := range transcodeTargets {
+		mp4boxCommand += fmt.Sprintf(" %s_%d.mp4#video", filePath, resize)
+	}
+
+	// Appending audio streams for each transcoded size
+	for resize := range transcodeTargets {
+		mp4boxCommand += fmt.Sprintf(" %s_%d.mp4#audio", filePath, resize)
+	}
 
 	_, err := ExecuteCLI(mp4boxCommand, false)
 	if err != nil {

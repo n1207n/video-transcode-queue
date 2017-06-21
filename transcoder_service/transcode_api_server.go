@@ -97,19 +97,26 @@ func performTranscoding(filePath string) (transcodedFilePaths []string, transcod
 
 	_, height := GetVideoDimensionInfo(filename, fileFolderPath)
 
+	var transcodeTargets []int
+
 	if height < 720 {
+		transcodeTargets = append(transcodeTargets, 720)
 		go TranscodeToHD720P(videoName, filename, fileFolderPath, waitGroup)
 	}
 
 	if height < 540 {
+		transcodeTargets = append(transcodeTargets, 540)
 		go TranscodeToSD540P(videoName, filename, fileFolderPath, waitGroup)
 	}
 
 	if height < 360 {
+		transcodeTargets = append(transcodeTargets, 360)
 		go TranscodeToSD360P(videoName, filename, fileFolderPath, waitGroup)
 	}
 
 	waitGroup.Wait()
+
+	ConstructMPD(videoName, filename, fileFolderPath, transcodeTargets)
 
 	return
 }
