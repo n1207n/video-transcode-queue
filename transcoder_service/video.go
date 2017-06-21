@@ -15,6 +15,7 @@ type Video struct {
 
 	Title          string `gorm:"not null" json:"title" binding:"required"`
 	IsReadyToServe bool   `sql:"DEFAULT:false" json:"is_ready_to_serve"`
+	StreamFilePath string `json:"stream_file_path"`
 
 	Renderings []VideoRendering
 }

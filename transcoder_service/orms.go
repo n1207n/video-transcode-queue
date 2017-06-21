@@ -59,6 +59,25 @@ func CreateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error
 	return videoSerializer, dbError
 }
 
+// UpdateVideoObject updates Video object to database
+func UpdateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error) {
+	var dbError error
+
+	defer connection.Close()
+
+	object, err := GetVideoObject(int(videoSerializer.ID), connection)
+	if err != nil {
+		dbError = connection.Error
+	}
+
+	connection.Model(&object).Updates(videoSerializer)
+	if connection.Error != nil {
+		dbError = connection.Error
+	}
+
+	return videoSerializer, dbError
+}
+
 // CreateVideoRenderingObject pushes VideoRendering object to database
 func CreateVideoRenderingObject(videoRendering VideoRendering, connection *gorm.DB) (VideoRendering, error) {
 	var dbError error
