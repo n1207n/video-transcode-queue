@@ -103,6 +103,7 @@ func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (tran
 		c.JSON(http.StatusBadRequest, gin.H{"video_id": transcodeRequest.VideoID, "status": "Failed to get video metadata. Corrupted file?"})
 
 		// TODO: Delete the video file
+		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"video_id": transcodeRequest.VideoID, "status": "In progress"})

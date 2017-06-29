@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -40,18 +38,18 @@ type FFProbeStreamData struct {
 	ColorPrimaries     *string           `json:"color_primaries,omitempty"`
 	ChromaLocation     *string           `json:"chroma_location,omitempty"`
 	Refs               *int              `json:"refs,omitempty"`
-	IsAVC              *bool             `json:"is_avc,omitempty"`
-	NalLengthSize      *int              `json:"nal_length_size,omitempty"`
+	IsAVC              *bool             `json:"is_avc,string,omitempty"`
+	NalLengthSize      *int              `json:"nal_length_size,string,omitempty"`
 	RFrameRate         string            `json:"r_frame_rate"`
 	AVGFrameRate       string            `json:"avg_frame_rate"`
 	TimeBase           string            `json:"time_base"`
 	StartPTS           int               `json:"start_pts"`
-	StartTime          float64           `json:"start_time"`
+	StartTime          float64           `json:"start_time,string"`
 	DurationTS         int               `json:"duration_ts"`
-	Duration           float64           `json:"duration"`
-	BitRate            int               `json:"bit_rate"`
-	BitsPerRawSample   *int              `json:"bits_per_raw_sample,omitempty"`
-	NBFrames           int               `json:"nb_frames"`
+	Duration           float64           `json:"duration,string"`
+	BitRate            int               `json:"bit_rate,string"`
+	BitsPerRawSample   *int              `json:"bits_per_raw_sample,string,omitempty"`
+	NBFrames           int               `json:"nb_frames,string"`
 	SampleFMT          *string           `json:"sample_fmt,omitempty"`
 	SampleRate         *int              `json:"sample_rate,string,omitempty"`
 	Channels           *int              `json:"channels,omitempty"`
@@ -84,17 +82,12 @@ func ExecuteCLI(commandString string, returnOutput bool) (*bytes.Buffer, error) 
 	head, commandArguments := commandArguments[0], commandArguments[1:]
 
 	cmd := exec.Command(head, commandArguments...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
 	outputBytes := new(bytes.Buffer)
+
+	cmd.Stdout = outputBytes
 
 	if err := cmd.Run(); err != nil {
 		return outputBytes, err
-	}
-
-	if returnOutput != false {
-		io.Copy(cmd.Stdout, outputBytes)
 	}
 
 	return outputBytes, nil
