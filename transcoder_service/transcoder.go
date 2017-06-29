@@ -299,19 +299,19 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 	_, err := ExecuteCLI(mp4boxCommand, false)
 	if err != nil {
 		glog.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
+	} else {
+		video := Video{
+			UpdatedAt:      time.Now(),
+			StreamFilePath: fmt.Sprintf("%s.mpd", filePath),
+			IsReadyToServe: true,
+		}
+
+		pgDb := dbConnectionInfo["pgDb"]
+		pgUser := dbConnectionInfo["pgUser"]
+		pgPassword := dbConnectionInfo["pgPassword"]
+		pgHost := dbConnectionInfo["pgHost"]
+
+		connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+		UpdateVideoObject(video, connection)
 	}
-
-	video := Video{
-		UpdatedAt:      time.Now(),
-		StreamFilePath: fmt.Sprintf("%s.mpd", filePath),
-		IsReadyToServe: true,
-	}
-
-	pgDb := dbConnectionInfo["pgDb"]
-	pgUser := dbConnectionInfo["pgUser"]
-	pgPassword := dbConnectionInfo["pgPassword"]
-	pgHost := dbConnectionInfo["pgHost"]
-
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	UpdateVideoObject(video, connection)
 }
