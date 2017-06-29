@@ -73,9 +73,7 @@ func transcodeVideo(c *gin.Context) {
 	if c.BindJSON(&request) == nil {
 		// TODO: Check if video id exists in PostgreSQL
 
-		performTranscoding(request)
-
-		c.JSON(http.StatusAccepted, gin.H{"video_id": request.VideoID, "status": "In progress"})
+		performTranscoding(request, c)
 	}
 }
 
@@ -85,7 +83,7 @@ type TranscodeRequest struct {
 	VideoID string `json:"video_id" binding:"required"`
 }
 
-func performTranscoding(transcodeRequest TranscodeRequest) (transcodedFilePaths []string, transcodeError error) {
+func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (transcodedFilePaths []string, transcodeError error) {
 	splitStringPaths := strings.Split(transcodeRequest.Path, "/")
 	fileFolderPath := strings.Join(splitStringPaths[:len(splitStringPaths)-1], "/")
 	filename := splitStringPaths[len(splitStringPaths)-1]
@@ -98,7 +96,16 @@ func performTranscoding(transcodeRequest TranscodeRequest) (transcodedFilePaths 
 
 	waitGroup := new(sync.WaitGroup)
 
-	_, height := GetVideoDimensionInfo(filename, fileFolderPath)
+	_, height, err := GetVideoDimensionInfo(filename, fileFolderPath)
+	if err != nil {
+		glog.Errorf("Error from getting video dimension info: %s\n", err.Error())
+
+		c.JSON(http.StatusBadRequest, gin.H{"video_id": transcodeRequest.VideoID, "status": "Failed to get video metadata. Corrupted file?"})
+
+		// TODO: Delete the video file
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"video_id": transcodeRequest.VideoID, "status": "In progress"})
 
 	var transcodeTargets []int
 	dbConnectionInfo := map[string]string{
