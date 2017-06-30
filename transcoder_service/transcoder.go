@@ -84,7 +84,7 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	sugaredLogger.Infof("Transcoded to SD 360P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
+	width, height, err := GetVideoDimensionInfo(filename, folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -126,7 +126,7 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 		return
 	}
 
-	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
+	width, height, err := GetVideoDimensionInfo(filename, folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -168,7 +168,7 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 		return
 	}
 
-	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
+	width, height, err := GetVideoDimensionInfo(filename, folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return

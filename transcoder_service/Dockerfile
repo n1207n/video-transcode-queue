@@ -233,12 +233,12 @@ RUN make install
 RUN cp /tmp/workdir/bin/gcc/MP4Box /bin/MP4Box
 
 RUN go get -u github.com/satori/go.uuid
-RUN go get -u github.com/golang/glog
 RUN go get -u gopkg.in/gin-gonic/gin.v1
 RUN go get -u github.com/nareix/joy4
 RUN go get -u github.com/nareix/bits
 RUN go get -u github.com/jinzhu/gorm
 RUN go get -u github.com/jinzhu/gorm/dialects/postgres
+RUN go get -u go.uber.org/zap
 
 RUN mkdir -p /home/dev/lib
 

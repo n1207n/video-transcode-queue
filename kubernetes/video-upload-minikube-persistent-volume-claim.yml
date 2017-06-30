@@ -5,6 +5,7 @@ metadata:
   name: video-upload-minikube-pv-volume-claim
 
 spec:
+  storageClassName: standard
   accessModes:
     - ReadWriteOnce
   resources:
