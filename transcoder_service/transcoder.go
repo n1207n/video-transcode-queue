@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,84 +8,17 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/golang/glog"
 )
 
-// FFProbeStreamData represents JSON format for each stream
-type FFProbeStreamData struct {
-	Index              int               `json:"index"`
-	CodecName          string            `json:"codec_name"`
-	CodecLongName      string            `json:"codec_long_name"`
-	Profile            int               `json:"profile,string"`
-	CodecType          string            `json:"codec_type"`
-	CodecTimeBase      string            `json:"codec_time_base"`
-	CodecTagString     string            `json:"codec_tag_string"`
-	CodecTag           string            `json:"codec_tag"`
-	Width              *int              `json:"width,omitempty"`
-	Height             *int              `json:"height,omitempty"`
-	CodedWidth         *int              `json:"coded_width,omitempty"`
-	CodedHeight        *int              `json:"coded_height,omitempty"`
-	HasBFrames         *int              `json:"has_b_frames,omitempty"`
-	SampleAspectRatio  *string           `json:"sample_aspect_ratio,omitempty"`
-	DisplayAspectRatio *string           `json:"display_aspect_ratio,omitempty"`
-	PixFmt             *string           `json:"pix_fmt,omitempty"`
-	Level              *int              `json:"level,omitempty"`
-	ColorRange         *string           `json:"color_range,omitempty"`
-	ColorSpace         *string           `json:"color_space,omitempty"`
-	ColorTransfer      *string           `json:"color_transfer,omitempty"`
-	ColorPrimaries     *string           `json:"color_primaries,omitempty"`
-	ChromaLocation     *string           `json:"chroma_location,omitempty"`
-	Refs               *int              `json:"refs,omitempty"`
-	IsAVC              *bool             `json:"is_avc,string,omitempty"`
-	NalLengthSize      *int              `json:"nal_length_size,string,omitempty"`
-	RFrameRate         string            `json:"r_frame_rate"`
-	AVGFrameRate       string            `json:"avg_frame_rate"`
-	TimeBase           string            `json:"time_base"`
-	StartPTS           int               `json:"start_pts"`
-	StartTime          float64           `json:"start_time,string"`
-	DurationTS         int               `json:"duration_ts"`
-	Duration           float64           `json:"duration,string"`
-	BitRate            int               `json:"bit_rate,string"`
-	BitsPerRawSample   *int              `json:"bits_per_raw_sample,string,omitempty"`
-	NBFrames           int               `json:"nb_frames,string"`
-	SampleFMT          *string           `json:"sample_fmt,omitempty"`
-	SampleRate         *int              `json:"sample_rate,string,omitempty"`
-	Channels           *int              `json:"channels,omitempty"`
-	ChannelLayout      *string           `json:"channel_layout,omitempty"`
-	BitsPerSample      *int              `json:"bits_per_sample,omitempty"`
-	Disposition        map[string]int    `json:"disposition"`
-	Tags               map[string]string `json:"tags"`
-}
-
-// StartTimeDuration represents
-// FFProbeStreamData's StartTime field as Duration object
-func (f FFProbeStreamData) StartTimeDuration() time.Duration {
-	return time.Duration(f.StartTime * float64(time.Second))
-}
-
-// DurationAsObject represents
-// FFProbeStreamData's Duration field as Duration object
-func (f FFProbeStreamData) DurationAsObject() time.Duration {
-	return time.Duration(f.Duration * float64(time.Second))
-}
-
-// ProbeData represents ffprobe info as JSON struct
-type ProbeData struct {
-	Stream []FFProbeStreamData `json:"streams,omitempty"`
-}
-
 // ExecuteCLI executes constructed command string by os.exec.Command
-func ExecuteCLI(commandString string, returnOutput bool) (*bytes.Buffer, error) {
+func ExecuteCLI(commandString string, returnOutput bool) ([]byte, error) {
 	commandArguments := strings.Fields(commandString)
 	head, commandArguments := commandArguments[0], commandArguments[1:]
 
 	cmd := exec.Command(head, commandArguments...)
-	outputBytes := new(bytes.Buffer)
+	outputBytes, err := cmd.Output()
 
-	cmd.Stdout = outputBytes
-
-	if err := cmd.Run(); err != nil {
+	if err != nil {
 		return outputBytes, err
 	}
 
@@ -95,7 +27,7 @@ func ExecuteCLI(commandString string, returnOutput bool) (*bytes.Buffer, error) 
 
 // GetVideoDimensionInfo extracts video width and height values
 func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error) {
-	glog.Infof("Getting video resolution info: %s/%s\n", folderPath, filename)
+	sugaredLogger.Infof("Getting video resolution info: %s/%s\n", folderPath, filename)
 
 	ffprobeCommand := fmt.Sprintf("ffprobe -show_streams -print_format json -v quiet %s/%s", folderPath, filename)
 
@@ -103,16 +35,16 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error)
 
 	outputBytes, err := ExecuteCLI(ffprobeCommand, true)
 	if err != nil {
-		glog.Errorf("Error during command execution: %s\nError: %s", ffprobeCommand, err.Error())
+		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffprobeCommand, err.Error())
 
 		return width, height, err
 	}
 
 	var probeData ProbeData
-	err = json.Unmarshal(outputBytes.Bytes(), &probeData)
+	err = json.Unmarshal(outputBytes, &probeData)
 
 	if err != nil {
-		glog.Errorf("ffprobe JSON parse error: %s\n", err.Error())
+		sugaredLogger.Errorf("ffprobe JSON parse error: %s\n", err.Error())
 
 		return width, height, err
 	}
@@ -136,27 +68,25 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error)
 
 // TranscodeToSD360P transcodes video file to 360P
 func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	glog.Infof("Transcoding to SD 360P: %s\n", videoName)
+	sugaredLogger.Infof("Transcoding to SD 360P: %s\n", videoName)
+
+	defer waitGroup.Done()
 
 	transcodedFileName := fmt.Sprintf("%s/%s_360.mp4", folderPath, videoName)
 
-	waitGroup.Add(1)
-
-	ffmpegCommand360P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 400k -maxrate 400k -bufsize 400k -vf scale=-1:360 -pass 1 %s/%s", folderPath, filename, folderPath, transcodedFileName)
+	ffmpegCommand360P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 400k -maxrate 400k -bufsize 400k -vf scale=-1:360 -pass 1 %s", folderPath, filename, transcodedFileName)
 
 	_, err := ExecuteCLI(ffmpegCommand360P, false)
 	if err != nil {
-		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
 		return
 	}
 
+	sugaredLogger.Infof("Transcoded to SD 360P: %s\n", videoName)
+
 	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
 	if err != nil {
-		glog.Errorf("Error from getting video dimension info: %s\n", err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
@@ -178,33 +108,27 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
-
-	waitGroup.Done()
 }
 
 // TranscodeToSD540P transcodes video file to 540P
 func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	glog.Infof("Transcoding to SD 540P: %s\n", videoName)
+	sugaredLogger.Infof("Transcoding to SD 540P: %s\n", videoName)
+
+	defer waitGroup.Done()
 
 	transcodedFileName := fmt.Sprintf("%s/%s_540.mp4", folderPath, videoName)
 
-	waitGroup.Add(1)
-
-	ffmpegCommand540P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 800k -maxrate 800k -bufsize 500k -vf scale=-1:540 -pass 1 %s/%s", folderPath, filename, folderPath, transcodedFileName)
+	ffmpegCommand540P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 800k -maxrate 800k -bufsize 500k -vf scale=-1:540 -pass 1 %s", folderPath, filename, transcodedFileName)
 
 	_, err := ExecuteCLI(ffmpegCommand540P, false)
 	if err != nil {
-		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
 		return
 	}
 
 	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
 	if err != nil {
-		glog.Errorf("Error from getting video dimension info: %s\n", err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
@@ -226,33 +150,27 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
-
-	waitGroup.Done()
 }
 
 // TranscodeToHD720P transcodes video file to 720P
 func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	glog.Infof("Transcoding to HD 720P: %s\n", videoName)
+	sugaredLogger.Infof("Transcoding to HD 720P: %s\n", videoName)
+
+	defer waitGroup.Done()
 
 	transcodedFileName := fmt.Sprintf("%s/%s_720.mp4", folderPath, videoName)
 
-	waitGroup.Add(1)
-
-	ffmpegCommand720P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 1500k -maxrate 1500k -bufsize 1000k -vf scale=-1:720 -pass 1 %s/%s", folderPath, filename, folderPath, transcodedFileName)
+	ffmpegCommand720P := fmt.Sprintf("ffmpeg -y -i %s/%s -c:a libfdk_aac -ac 2 -ab 128k -preset slow -c:v libx264 -x264opts keyint=24:min-keyint=24:no-scenecut -b:v 1500k -maxrate 1500k -bufsize 1000k -vf scale=-1:720 -pass 1 %s", folderPath, filename, transcodedFileName)
 
 	_, err := ExecuteCLI(ffmpegCommand720P, false)
 	if err != nil {
-		glog.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
 		return
 	}
 
 	width, height, err := GetVideoDimensionInfo(transcodedFileName, folderPath)
 	if err != nil {
-		glog.Errorf("Error from getting video dimension info: %s\n", err.Error())
-
-		waitGroup.Done()
+		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
@@ -274,13 +192,11 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
-
-	waitGroup.Done()
 }
 
 // ConstructMPD creates MPD file for DASH streaming
 func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int, dbConnectionInfo map[string]string) {
-	glog.Infof("Constructing MPD file: %s\n", videoName)
+	sugaredLogger.Infof("Constructing MPD file: %s\n", videoName)
 
 	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
 
@@ -298,7 +214,7 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 
 	_, err := ExecuteCLI(mp4boxCommand, false)
 	if err != nil {
-		glog.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
+		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
 	} else {
 		video := Video{
 			UpdatedAt:      time.Now(),

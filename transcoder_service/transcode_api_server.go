@@ -1,26 +1,25 @@
 package main
 
 import (
-	"flag"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/golang/glog"
+	"go.uber.org/zap"
+
 	"gopkg.in/gin-gonic/gin.v1"
 )
 
 var (
 	pgDb, pgUser, pgPassword, pgHost string
 	uploadFolderPath                 string
+	sugaredLogger                    *zap.SugaredLogger
 )
 
 func main() {
-	flag.Parse()
 	loadEnvironmentVariables()
-	glog.Infoln("Starting transcoder API server")
 	startAPIServer()
 }
 
@@ -54,6 +53,12 @@ func loadEnvironmentVariables() {
 }
 
 func startAPIServer() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	sugaredLogger = logger.Sugar()
+	sugaredLogger.Info("Starting transcoder API server\n")
+
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
@@ -94,46 +99,63 @@ func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (tran
 
 	videoID, _ := strconv.Atoi(transcodeRequest.VideoID)
 
-	waitGroup := new(sync.WaitGroup)
+	var waitGroup sync.WaitGroup
 
 	_, height, err := GetVideoDimensionInfo(filename, fileFolderPath)
 	if err != nil {
-		glog.Errorf("Error from getting video dimension info: %s\n", err.Error())
+		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 
 		c.JSON(http.StatusBadRequest, gin.H{"video_id": transcodeRequest.VideoID, "status": "Failed to get video metadata. Corrupted file?"})
 
 		// TODO: Delete the video file
-		return
+	} else {
+		var transcodeTargets []int
+		dbConnectionInfo := map[string]string{
+			pgDb:       pgDb,
+			pgUser:     pgUser,
+			pgPassword: pgPassword,
+			pgHost:     pgHost,
+		}
+
+		if height >= 720 {
+			transcodeTargets = append(transcodeTargets, 720)
+		}
+
+		if height >= 540 {
+			transcodeTargets = append(transcodeTargets, 540)
+		}
+
+		if height >= 360 {
+			transcodeTargets = append(transcodeTargets, 360)
+		}
+
+		if height < 360 {
+			transcodeTargets = append(transcodeTargets, 360)
+		}
+
+		waitGroup.Add(len(transcodeTargets))
+
+		for _, target := range transcodeTargets {
+			switch target {
+			case 720:
+				go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+			case 540:
+				go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+			case 360:
+				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+			default:
+				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+			}
+		}
+
+		waitGroup.Wait()
+
+		c.JSON(http.StatusOK, gin.H{"video_id": transcodeRequest.VideoID, "status": "In progress"})
+
+		sugaredLogger.Infof("Constructing MPD for %s", videoName)
+
+		ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets, dbConnectionInfo)
 	}
-
-	c.JSON(http.StatusAccepted, gin.H{"video_id": transcodeRequest.VideoID, "status": "In progress"})
-
-	var transcodeTargets []int
-	dbConnectionInfo := map[string]string{
-		pgDb:       pgDb,
-		pgUser:     pgUser,
-		pgPassword: pgPassword,
-		pgHost:     pgHost,
-	}
-
-	if height < 720 {
-		transcodeTargets = append(transcodeTargets, 720)
-		go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
-	}
-
-	if height < 540 {
-		transcodeTargets = append(transcodeTargets, 540)
-		go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
-	}
-
-	if height < 360 {
-		transcodeTargets = append(transcodeTargets, 360)
-		go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, waitGroup)
-	}
-
-	waitGroup.Wait()
-
-	ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets, dbConnectionInfo)
 
 	return
 }
