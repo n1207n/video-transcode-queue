@@ -84,7 +84,7 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	sugaredLogger.Infof("Transcoded to SD 360P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(filename, folderPath)
+	width, height, err := GetVideoDimensionInfo(filename+"_360.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -108,6 +108,8 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
+
+	sugaredLogger.Infof("Added DB record for SD 360P: %s\n", videoName)
 }
 
 // TranscodeToSD540P transcodes video file to 540P
@@ -126,7 +128,9 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 		return
 	}
 
-	width, height, err := GetVideoDimensionInfo(filename, folderPath)
+	sugaredLogger.Infof("Transcoded to SD 540P: %s\n", videoName)
+
+	width, height, err := GetVideoDimensionInfo(filename+"_540.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -150,6 +154,8 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
+
+	sugaredLogger.Infof("Added DB record for SD 540P: %s\n", videoName)
 }
 
 // TranscodeToHD720P transcodes video file to 720P
@@ -168,7 +174,9 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 		return
 	}
 
-	width, height, err := GetVideoDimensionInfo(filename, folderPath)
+	sugaredLogger.Infof("Transcoded to HD 720P: %s\n", videoName)
+
+	width, height, err := GetVideoDimensionInfo(filename+"_720.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -192,6 +200,8 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 
 	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 	CreateVideoRenderingObject(videoRendering, connection)
+
+	sugaredLogger.Infof("Added DB record for HD 720P: %s\n", videoName)
 }
 
 // ConstructMPD creates MPD file for DASH streaming

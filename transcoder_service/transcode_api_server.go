@@ -57,7 +57,7 @@ func startAPIServer() {
 	defer logger.Sync()
 
 	sugaredLogger = logger.Sugar()
-	sugaredLogger.Info("Starting transcoder API server\n")
+	sugaredLogger.Info("Starting transcoder API server")
 
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
@@ -111,10 +111,10 @@ func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (tran
 	} else {
 		var transcodeTargets []int
 		dbConnectionInfo := map[string]string{
-			pgDb:       pgDb,
-			pgUser:     pgUser,
-			pgPassword: pgPassword,
-			pgHost:     pgHost,
+			"pgDb":       pgDb,
+			"pgUser":     pgUser,
+			"pgPassword": pgPassword,
+			"pgHost":     pgHost,
 		}
 
 		if height >= 720 {
