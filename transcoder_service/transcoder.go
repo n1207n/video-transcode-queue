@@ -84,7 +84,7 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	sugaredLogger.Infof("Transcoded to SD 360P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(filename+"_360.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_360.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -130,7 +130,7 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 
 	sugaredLogger.Infof("Transcoded to SD 540P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(filename+"_540.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_540.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -176,7 +176,7 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 
 	sugaredLogger.Infof("Transcoded to HD 720P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(filename+"_720.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_720.mp4", folderPath)
 	if err != nil {
 		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
@@ -213,12 +213,12 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 	mp4boxCommand := fmt.Sprintf("MP4Box -dash 3000 -frag 3000 -rap -profile dashavc264:onDemand -out %s.mpd", filePath)
 
 	// Appending video streams for each transcoded size
-	for resize := range transcodeTargets {
+	for _, resize := range transcodeTargets {
 		mp4boxCommand += fmt.Sprintf(" %s_%d.mp4#video", filePath, resize)
 	}
 
 	// Appending audio streams for each transcoded size
-	for resize := range transcodeTargets {
+	for _, resize := range transcodeTargets {
 		mp4boxCommand += fmt.Sprintf(" %s_%d.mp4#audio", filePath, resize)
 	}
 
