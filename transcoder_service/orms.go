@@ -60,26 +60,17 @@ func CreateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error
 }
 
 // UpdateVideoObject updates Video object to database
-func UpdateVideoObject(videoID int, updateFields map[string]interface{}, connection *gorm.DB) (Video, error) {
+func UpdateVideoObject(updatedVideo Video, connection *gorm.DB) (Video, error) {
 	var dbError error
 
 	defer connection.Close()
 
-	object, err := GetVideoObject(videoID, connection)
-	if err != nil {
-		dbError = connection.Error
-	}
-
-	sugaredLogger.Info(object, updateFields)
-
-	connection.Model(&object).Updates(updateFields)
+	connection.Save(&updatedVideo)
 	if connection.Error != nil {
 		dbError = connection.Error
 	}
 
-	sugaredLogger.Info(object, dbError)
-
-	return object, dbError
+	return updatedVideo, dbError
 }
 
 // CreateVideoRenderingObject pushes VideoRendering object to database

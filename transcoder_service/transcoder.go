@@ -226,22 +226,26 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 	if err != nil {
 		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
 	} else {
-		video := map[string]interface{}{
-			"updated_at":        time.Now(),
-			"stream_file_path":  fmt.Sprintf("%s.mpd", filePath),
-			"is_ready_to_serve": true,
-		}
-
 		pgDb := dbConnectionInfo["pgDb"]
 		pgUser := dbConnectionInfo["pgUser"]
 		pgPassword := dbConnectionInfo["pgPassword"]
 		pgHost := dbConnectionInfo["pgHost"]
 
 		connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-		_, err := UpdateVideoObject(videoID, video, connection)
-
+		object, err := GetVideoObject(videoID, connection)
 		if err != nil {
-			sugaredLogger.Errorw("Video object Update failed:", err.Error())
+			sugaredLogger.Errorw("Video object GET failed for updating:", err.Error())
+			return
+		}
+
+		object.UpdatedAt = time.Now()
+		object.StreamFilePath = fmt.Sprintf("%s.mpd", filePath)
+		object.IsReadyToServe = true
+
+		connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+		_, updateErr := UpdateVideoObject(object, connection)
+		if updateErr != nil {
+			sugaredLogger.Errorw("Video object Update failed:", updateErr.Error())
 		}
 	}
 }
