@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,8 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/adjust/rmq"
-	"github.com/golang/glog"
 
 	"gopkg.in/gin-gonic/gin.v1"
 	redis "gopkg.in/redis.v3"
@@ -23,10 +23,10 @@ var (
 	redisURL, redisPort, redisPassword, redisTopic string
 	redisProtocol                                  = "tcp"
 	redisNetworkTag                                = "transcode_task_consume"
+	sugaredLogger                                  *zap.SugaredLogger
 )
 
 func main() {
-	flag.Parse()
 	loadEnvironmentVariables()
 	CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
 	startAPIServer()
@@ -92,12 +92,18 @@ func openTaskQueue() rmq.Queue {
 
 	connection := rmq.OpenConnectionWithRedisClient(redisNetworkTag, redisClient)
 
-	glog.Infof("Connected to Redis task queue: %s\n", connection.Name)
+	sugaredLogger.Infof("Connected to Redis task queue: %s\n", connection.Name)
 
 	return connection.OpenQueue(redisTopic)
 }
 
 func startAPIServer() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	sugaredLogger = logger.Sugar()
+	sugaredLogger.Info("Starting video API server")
+
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
@@ -204,7 +210,7 @@ func uploadVideoFile(c *gin.Context) {
 
 	outFile, err := os.Create(videoFullPath)
 	if err != nil {
-		glog.Fatalln("Failed to write filesystem:", err)
+		sugaredLogger.Fatal("Failed to write filesystem:", err)
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -218,7 +224,7 @@ func uploadVideoFile(c *gin.Context) {
 
 	_, err = io.Copy(outFile, file)
 	if err != nil {
-		glog.Fatalln("Failed to copy video file:", err)
+		sugaredLogger.Fatal("Failed to copy video file:", err)
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -233,7 +239,7 @@ func uploadVideoFile(c *gin.Context) {
 
 	queueDataBytes, err := json.Marshal(task)
 	taskQueue.PublishBytes(queueDataBytes)
-	glog.Infoln("Queue task created...:", task)
+	sugaredLogger.Info("Queue task created...:", task)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Video file uploaded. Transcoding now: %s", videoID),

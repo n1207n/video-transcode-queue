@@ -243,6 +243,14 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 		object.IsReadyToServe = true
 
 		connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+		_, renderings, renderingListErr := GetVideoRenderingObjects(object, connection)
+		if renderingListErr != nil {
+			sugaredLogger.Errorw("Video rendering objects GET failed for updating:", renderingListErr.Error())
+		}
+
+		object.Renderings = renderings
+
+		connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
 		_, updateErr := UpdateVideoObject(object, connection)
 		if updateErr != nil {
 			sugaredLogger.Errorw("Video object Update failed:", updateErr.Error())

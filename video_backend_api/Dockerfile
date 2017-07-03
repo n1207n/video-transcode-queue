@@ -7,7 +7,7 @@ RUN apk update && apk upgrade && \
 
 RUN go get -u github.com/satori/go.uuid
 RUN go get -u github.com/joho/godotenv
-RUN go get -u github.com/golang/glog
+RUN go get -u go.uber.org/zap
 RUN go get -u gopkg.in/gin-gonic/gin.v1
 RUN go get -u github.com/jinzhu/gorm
 RUN go get -u github.com/jinzhu/gorm/dialects/postgres
