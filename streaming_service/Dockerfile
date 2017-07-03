@@ -10,6 +10,7 @@ RUN go get -u github.com/joho/godotenv
 RUN go get -u go.uber.org/zap
 RUN go get -u github.com/gin-gonic/gin
 RUN go get -u github.com/gin-contrib/static
+RUN go get -u github.com/gin-gonic/autotls
 RUN go get -u github.com/jinzhu/gorm
 RUN go get -u github.com/jinzhu/gorm/dialects/postgres
 RUN go get -u gopkg.in/redis.v3
@@ -25,4 +26,4 @@ RUN go install
 
 ENTRYPOINT /go/bin/streaming_service
 
-EXPOSE 8080
+EXPOSE 8880

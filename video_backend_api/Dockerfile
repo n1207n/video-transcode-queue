@@ -9,6 +9,7 @@ RUN go get -u github.com/satori/go.uuid
 RUN go get -u github.com/joho/godotenv
 RUN go get -u go.uber.org/zap
 RUN go get -u github.com/gin-gonic/gin
+RUN go get -u github.com/gin-gonic/autotls
 RUN go get -u github.com/jinzhu/gorm
 RUN go get -u github.com/jinzhu/gorm/dialects/postgres
 RUN go get -u gopkg.in/redis.v3
