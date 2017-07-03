@@ -26,7 +26,11 @@ func CreateSchemas(user string, password string, host string, db string) {
 
 	defer connection.Close()
 
+	connection.DropTableIfExists(&Video{}, &VideoRendering{})
 	connection.AutoMigrate(&Video{}, &VideoRendering{})
+
 	connection.Model(&VideoRendering{}).AddForeignKey("video_id", "videos(id)", "CASCADE", "CASCADE")
+
+	connection.Model(&VideoRendering{}).AddIndex("idx_video_id", "video_id")
 
 }

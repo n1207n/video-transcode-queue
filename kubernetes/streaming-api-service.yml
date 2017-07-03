@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: streaming-api
+  labels:
+    name: streaming-api
+    tier: backend
+
+spec:
+  ports:
+    - port: 8880
+      targetPort: 8880
+      protocol: TCP
+  selector:
+    name: streaming-api
+    tier: backend

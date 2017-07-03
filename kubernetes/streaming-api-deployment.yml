@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+
+kind: Deployment
+
+metadata:
+  name: streaming-api
+  labels:
+    name: streaming-api
+    tier: backend
+
+spec:
+  replicas: 1
+
+  template:
+    metadata:
+      labels:
+        name: streaming-api
+        tier: backend
+
+    spec:
+      volumes:
+      - name: video-upload-minikube-pv-volume
+        persistentVolumeClaim:
+          claimName: video-upload-minikube-pv-volume-claim
+
+      containers:
+        - name: streaming-api
+          image: n1207n/video-transcode-queue/streaming_service:dev
+          imagePullPolicy: Never
+
+          volumeMounts:
+            - mountPath: "/data/video_uploads/"
+              name: video-upload-minikube-pv-volume
+
+          command: ["ash"]
+          args: ["-c", "/go/bin/streaming_service"]
+
+          ports:
+            - containerPort: 8880
+              name: streaming-api
+
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+
+            - name: PGDB
+              value: video_app
+            - name: PGUSER
+              value: video_app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-database-postgresql
+                  key: postgres-password
+            - name: PGHOST
+              value: app-database-postgresql:5432
+            - name: UPLOAD_FOLDER_PATH
+              value: /data/video_uploads/

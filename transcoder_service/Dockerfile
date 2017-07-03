@@ -233,7 +233,7 @@ RUN make install
 RUN cp /tmp/workdir/bin/gcc/MP4Box /bin/MP4Box
 
 RUN go get -u github.com/satori/go.uuid
-RUN go get -u gopkg.in/gin-gonic/gin.v1
+RUN go get -u github.com/gin-gonic/gin
 RUN go get -u github.com/nareix/joy4
 RUN go get -u github.com/nareix/bits
 RUN go get -u github.com/jinzhu/gorm
