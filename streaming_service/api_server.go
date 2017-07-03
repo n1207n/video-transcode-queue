@@ -60,7 +60,8 @@ func startAPIServer() {
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
 
-	router.Use(static.Serve("/contents", static.LocalFile(uploadFolderPath, false)))
+	// TODO: Use uploadFolderPath later for better security
+	router.Use(static.Serve("/contents", static.LocalFile("/", false)))
 
 	// By default it serves on :8080
 	router.Run(":8880")
