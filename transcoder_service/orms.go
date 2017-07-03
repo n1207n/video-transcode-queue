@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/jinzhu/gorm"
 )
@@ -15,12 +14,28 @@ func GetVideoObjects(connection *gorm.DB) (uint, []Video, error) {
 
 	defer connection.Close()
 
-	connection.Find(&videos).Count(&count)
+	connection.Preload("Renderings").Find(&videos)
 	if connection.Error != nil {
 		dbError = connection.Error
 	}
 
 	return count, videos, dbError
+}
+
+// GetVideoRenderingObjects returns a list of VideoRendering objects linked to Video ID and its count from database
+func GetVideoRenderingObjects(video Video, connection *gorm.DB) (uint, []VideoRendering, error) {
+	var renderings []VideoRendering
+	var count uint
+	var dbError error
+
+	defer connection.Close()
+
+	connection.Model(&video).Related(&renderings).Count(&count)
+	if connection.Error != nil {
+		dbError = connection.Error
+	}
+
+	return count, renderings, dbError
 }
 
 // GetVideoObject returns a Video object from given id from database
@@ -30,9 +45,7 @@ func GetVideoObject(videoID int, connection *gorm.DB) (Video, error) {
 
 	defer connection.Close()
 
-	fmt.Println(video)
-
-	connection.Where(map[string]interface{}{"id": videoID}).First(&video)
+	connection.Where(map[string]interface{}{"id": videoID}).Preload("Renderings").First(&video)
 	if connection.Error != nil {
 		dbError = connection.Error
 	}

@@ -17,7 +17,7 @@ type Video struct {
 	IsReadyToServe bool   `sql:"DEFAULT:false" json:"is_ready_to_serve"`
 	StreamFilePath string `json:"stream_file_path"`
 
-	Renderings []VideoRendering
+	Renderings []VideoRendering `gorm:"ForeignKey:VideoID"`
 }
 
 func (v Video) String() string {
@@ -36,7 +36,7 @@ type VideoRendering struct {
 	Width    uint   `gorm:"not null" json:"width"`
 	Height   uint   `gorm:"not null" json:"height"`
 
-	VideoID uint `gorm:"index;not null"`
+	VideoID uint `json:"video_id"`
 }
 
 func (vr VideoRendering) String() string {
