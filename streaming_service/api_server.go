@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -59,6 +60,12 @@ func startAPIServer() {
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
 	router := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Range"}
+
+	router.Use(cors.New(corsConfig))
 
 	// TODO: Use uploadFolderPath later for better security
 	router.Use(static.Serve("/contents", static.LocalFile("/", false)))
