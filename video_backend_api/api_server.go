@@ -12,8 +12,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/adjust/rmq"
+	"github.com/gin-gonic/gin"
 
-	"gopkg.in/gin-gonic/gin.v1"
 	redis "gopkg.in/redis.v3"
 )
 

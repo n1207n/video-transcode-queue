@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"go.uber.org/zap"
+	"github.com/gin-gonic/gin"
 
-	"gopkg.in/gin-gonic/gin.v1"
+	"go.uber.org/zap"
 )
 
 var (
