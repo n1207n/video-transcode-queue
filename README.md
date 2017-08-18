@@ -31,5 +31,5 @@ export LD_LIBRARY_PATH=$HOME/ffmpeg/lib`
 6. Run minikube and kubectl proxy
   * `minikube start`
   * `kubectl proxy`
-7, Access minikube external url
+7. Access minikube external url
   * `minikube service video-api --url` or `minikube service streaming-api --url`
