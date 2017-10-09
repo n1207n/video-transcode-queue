@@ -86,6 +86,20 @@ func UpdateVideoObject(updatedVideo Video, connection *gorm.DB) (Video, error) {
 	return updatedVideo, dbError
 }
 
+// DeleteVideoObject deletes Video object in database
+func DeleteVideoObject(video Video, connection *gorm.DB) (Video, error) {
+	var dbError error
+
+	defer connection.Close()
+
+	connection.Delete(&video)
+	if connection.Error != nil {
+		dbError = connection.Error
+	}
+
+	return video, dbError
+}
+
 // CreateVideoRenderingObject pushes VideoRendering object to database
 func CreateVideoRenderingObject(videoRendering VideoRendering, connection *gorm.DB) (VideoRendering, error) {
 	var dbError error

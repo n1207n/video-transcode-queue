@@ -112,6 +112,7 @@ func startAPIServer() {
 	{
 		v1.GET("/videos", getVideoList)
 		v1.GET("/videos/:id", getVideoDetail)
+		v1.DELETE("/videos/:id", deleteVideo)
 		v1.POST("/videos", createVideo)
 		v1.POST("/video-upload", uploadVideoFile)
 	}
@@ -147,6 +148,32 @@ func getVideoDetail(c *gin.Context) {
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
+			"data": video,
+		})
+	}
+}
+
+func deleteVideo(c *gin.Context) {
+	videoID, err := strconv.Atoi(c.Param("id"))
+
+	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err := GetVideoObject(videoID, connection)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err = DeleteVideoObject(video, connection)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	} else {
+		c.JSON(http.StatusNoContent, gin.H{
 			"data": video,
 		})
 	}
