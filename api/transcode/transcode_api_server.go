@@ -65,14 +65,14 @@ func startTranscodeAPIServer() {
 
 	v1 := router.Group("/api/v1")
 	{
-		v1.POST("/video-", video)
+		v1.POST("/video-transcode", transcodeVideo)
 	}
 
 	// By default it serves on :8080
 	router.Run(":8800")
 }
 
-func video(c *gin.Context) {
+func transcodeVideo(c *gin.Context) {
 	var request TranscodeRequest
 
 	if c.BindJSON(&request) == nil {
@@ -82,13 +82,13 @@ func video(c *gin.Context) {
 	}
 }
 
-// TranscodeRequest represents a JSON POST data for video- API
+// TranscodeRequest represents a JSON POST data for video-transcode API
 type TranscodeRequest struct {
 	Path    string `json:"path" binding:"required"`
 	VideoID string `json:"video_id" binding:"required"`
 }
 
-func performTranscoding(request TranscodeRequest, c *gin.Context) (dFilePaths []string, error error) {
+func performTranscoding(request TranscodeRequest, c *gin.Context) (transcodedFilePaths []string, transcodeError error) {
 	splitStringPaths := strings.Split(request.Path, "/")
 	fileFolderPath := strings.Join(splitStringPaths[:len(splitStringPaths)-1], "/")
 	filename := splitStringPaths[len(splitStringPaths)-1]
