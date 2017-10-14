@@ -13,12 +13,12 @@ import (
 var (
 	pgDb, pgUser, pgPassword, pgHost string
 	uploadFolderPath                 string
-	sugaredLogger                    *zap.SugaredLogger
+	logger                           *zap.SugaredLogger
 )
 
 func main() {
 	loadEnvironmentVariables()
-	startAPIServer()
+	startStreamingAPIServer()
 }
 
 // loadEnvironmentVariables loads PostgreSQL
@@ -26,22 +26,22 @@ func main() {
 func loadEnvironmentVariables() {
 	pgDb = os.Getenv("PGDB")
 	if len(pgDb) == 0 {
-		panic("No PGDB environment variable")
+		panic("No pgDB environment variable")
 	}
 
 	pgUser = os.Getenv("PGUSER")
 	if len(pgUser) == 0 {
-		panic("No PGUSER environment variable")
+		panic("No pgUSER environment variable")
 	}
 
 	pgPassword = os.Getenv("PGPASSWORD")
 	if len(pgPassword) == 0 {
-		panic("No PGPASSWORD environment variable")
+		panic("No pgPASSWORD environment variable")
 	}
 
 	pgHost = os.Getenv("PGHOST")
 	if len(pgHost) == 0 {
-		panic("No PGHOST environment variable")
+		panic("No pgHOST environment variable")
 	}
 
 	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
@@ -50,12 +50,12 @@ func loadEnvironmentVariables() {
 	}
 }
 
-func startAPIServer() {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+func startStreamingAPIServer() {
+	log, _ := zap.NewProduction()
+	defer log.Sync()
 
-	sugaredLogger = logger.Sugar()
-	sugaredLogger.Info("Starting video streaming API server")
+	logger = log.Sugar()
+	logger.Info("Starting streaming API server")
 
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware

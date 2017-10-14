@@ -13,6 +13,8 @@ import (
 
 	"github.com/adjust/rmq"
 	"github.com/gin-gonic/gin"
+	"github.com/n1207n/video-transcode-platform/api/common/database"
+	"github.com/n1207n/video-transcode-platform/api/common/entity"
 
 	redis "gopkg.in/redis.v3"
 )
@@ -23,13 +25,13 @@ var (
 	redisURL, redisPort, redisPassword, redisTopic string
 	redisProtocol                                  = "tcp"
 	redisNetworkTag                                = "transcode_task_consume"
-	sugaredLogger                                  *zap.SugaredLogger
+	logger                                         *zap.SugaredLogger
 )
 
 func main() {
 	loadEnvironmentVariables()
-	CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
-	startAPIServer()
+	database.CreateSchemas(pgUser, pgPassword, pgHost, pgDb)
+	startBackendAPIServer()
 }
 
 // loadEnvironmentVariables loads PostgreSQL
@@ -37,22 +39,22 @@ func main() {
 func loadEnvironmentVariables() {
 	pgDb = os.Getenv("PGDB")
 	if len(pgDb) == 0 {
-		panic("No PGDB environment variable")
+		panic("No pgDB environment variable")
 	}
 
 	pgUser = os.Getenv("PGUSER")
 	if len(pgUser) == 0 {
-		panic("No PGUSER environment variable")
+		panic("No pgUSER environment variable")
 	}
 
 	pgPassword = os.Getenv("PGPASSWORD")
 	if len(pgPassword) == 0 {
-		panic("No PGPASSWORD environment variable")
+		panic("No pgPASSWORD environment variable")
 	}
 
 	pgHost = os.Getenv("PGHOST")
 	if len(pgHost) == 0 {
-		panic("No PGHOST environment variable")
+		panic("No pgHOST environment variable")
 	}
 
 	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
@@ -92,17 +94,17 @@ func openTaskQueue() rmq.Queue {
 
 	connection := rmq.OpenConnectionWithRedisClient(redisNetworkTag, redisClient)
 
-	sugaredLogger.Infof("Connected to Redis task queue: %s\n", connection.Name)
+	logger.Infof("Connected to Redis task queue: %s\n", connection.Name)
 
 	return connection.OpenQueue(redisTopic)
 }
 
-func startAPIServer() {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+func startBackendAPIServer() {
+	log, _ := zap.NewProduction()
+	defer log.Sync()
 
-	sugaredLogger = logger.Sugar()
-	sugaredLogger.Info("Starting video API server")
+	logger = log.Sugar()
+	logger.Info("Starting video backend API server")
 
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
@@ -122,8 +124,8 @@ func startAPIServer() {
 }
 
 func getVideoList(c *gin.Context) {
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	count, videos, err := GetVideoObjects(connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	count, videos, err := database.GetVideoObjects(connection)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -140,8 +142,8 @@ func getVideoList(c *gin.Context) {
 func getVideoDetail(c *gin.Context) {
 	videoID, err := strconv.Atoi(c.Param("id"))
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	video, err := GetVideoObject(videoID, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err := database.GetVideoObject(videoID, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -156,8 +158,8 @@ func getVideoDetail(c *gin.Context) {
 func deleteVideo(c *gin.Context) {
 	videoID, err := strconv.Atoi(c.Param("id"))
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	video, err := GetVideoObject(videoID, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err := database.GetVideoObject(videoID, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -166,8 +168,8 @@ func deleteVideo(c *gin.Context) {
 		return
 	}
 
-	connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	video, err = DeleteVideoObject(video, connection)
+	connection = database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	video, err = database.DeleteVideoObject(video, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -180,7 +182,7 @@ func deleteVideo(c *gin.Context) {
 }
 
 func createVideo(c *gin.Context) {
-	var videoSerializer Video
+	var videoSerializer entity.Video
 
 	if err := c.BindJSON(&videoSerializer); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -190,8 +192,8 @@ func createVideo(c *gin.Context) {
 		return
 	}
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	videoSerializer, err := CreateVideoObject(videoSerializer, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	videoSerializer, err := database.CreateVideoObject(videoSerializer, connection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -237,7 +239,7 @@ func uploadVideoFile(c *gin.Context) {
 
 	outFile, err := os.Create(videoFullPath)
 	if err != nil {
-		sugaredLogger.Fatal("Failed to write filesystem:", err)
+		logger.Fatal("Failed to write filesystem:", err)
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -251,7 +253,7 @@ func uploadVideoFile(c *gin.Context) {
 
 	_, err = io.Copy(outFile, file)
 	if err != nil {
-		sugaredLogger.Fatal("Failed to copy video file:", err)
+		logger.Fatal("Failed to copy video file:", err)
 
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -262,11 +264,11 @@ func uploadVideoFile(c *gin.Context) {
 	}
 
 	taskQueue := openTaskQueue()
-	task := Task{ID: videoID, Timestamp: time.Now(), FilePath: videoFullPath}
+	task := entity.Task{ID: videoID, Timestamp: time.Now(), FilePath: videoFullPath}
 
 	queueDataBytes, err := json.Marshal(task)
 	taskQueue.PublishBytes(queueDataBytes)
-	sugaredLogger.Info("Queue task created...:", task)
+	logger.Info("Queue task created...:", task)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Video file uploaded. Transcoding now: %s", videoID),

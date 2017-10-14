@@ -15,12 +15,12 @@ import (
 var (
 	pgDb, pgUser, pgPassword, pgHost string
 	uploadFolderPath                 string
-	sugaredLogger                    *zap.SugaredLogger
+	logger                           *zap.SugaredLogger
 )
 
 func main() {
 	loadEnvironmentVariables()
-	startAPIServer()
+	startTranscodeAPIServer()
 }
 
 // loadEnvironmentVariables loads PostgreSQL
@@ -28,22 +28,22 @@ func main() {
 func loadEnvironmentVariables() {
 	pgDb = os.Getenv("PGDB")
 	if len(pgDb) == 0 {
-		panic("No PGDB environment variable")
+		panic("No pgDB environment variable")
 	}
 
 	pgUser = os.Getenv("PGUSER")
 	if len(pgUser) == 0 {
-		panic("No PGUSER environment variable")
+		panic("No pgUSER environment variable")
 	}
 
 	pgPassword = os.Getenv("PGPASSWORD")
 	if len(pgPassword) == 0 {
-		panic("No PGPASSWORD environment variable")
+		panic("No pgPASSWORD environment variable")
 	}
 
 	pgHost = os.Getenv("PGHOST")
 	if len(pgHost) == 0 {
-		panic("No PGHOST environment variable")
+		panic("No pgHOST environment variable")
 	}
 
 	uploadFolderPath = os.Getenv("UPLOAD_FOLDER_PATH")
@@ -52,12 +52,12 @@ func loadEnvironmentVariables() {
 	}
 }
 
-func startAPIServer() {
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+func startTranscodeAPIServer() {
+	log, _ := zap.NewProduction()
+	defer log.Sync()
 
-	sugaredLogger = logger.Sugar()
-	sugaredLogger.Info("Starting transcoder API server")
+	logger = log.Sugar()
+	logger.Info("Starting transcode API server")
 
 	// Creates a gin router with default middleware:
 	// logger and recovery (crash-free) middleware
@@ -65,14 +65,14 @@ func startAPIServer() {
 
 	v1 := router.Group("/api/v1")
 	{
-		v1.POST("/video-transcode", transcodeVideo)
+		v1.POST("/video-", video)
 	}
 
 	// By default it serves on :8080
 	router.Run(":8800")
 }
 
-func transcodeVideo(c *gin.Context) {
+func video(c *gin.Context) {
 	var request TranscodeRequest
 
 	if c.BindJSON(&request) == nil {
@@ -82,14 +82,14 @@ func transcodeVideo(c *gin.Context) {
 	}
 }
 
-// TranscodeRequest represents a JSON POST data for video-transcode API
+// TranscodeRequest represents a JSON POST data for video- API
 type TranscodeRequest struct {
 	Path    string `json:"path" binding:"required"`
 	VideoID string `json:"video_id" binding:"required"`
 }
 
-func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (transcodedFilePaths []string, transcodeError error) {
-	splitStringPaths := strings.Split(transcodeRequest.Path, "/")
+func performTranscoding(request TranscodeRequest, c *gin.Context) (dFilePaths []string, error error) {
+	splitStringPaths := strings.Split(request.Path, "/")
 	fileFolderPath := strings.Join(splitStringPaths[:len(splitStringPaths)-1], "/")
 	filename := splitStringPaths[len(splitStringPaths)-1]
 
@@ -97,19 +97,19 @@ func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (tran
 	splitFilenameCharacters := strings.Split(filename, ".")
 	videoName := strings.Join(splitFilenameCharacters[:len(splitFilenameCharacters)-1], "_")
 
-	videoID, _ := strconv.Atoi(transcodeRequest.VideoID)
+	videoID, _ := strconv.Atoi(request.VideoID)
 
 	var waitGroup sync.WaitGroup
 
-	_, height, err := GetVideoDimensionInfo(filename, fileFolderPath)
+	_, height, err := GetVideoDimensionInfo(filename, fileFolderPath, logger)
 	if err != nil {
-		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
+		logger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 
-		c.JSON(http.StatusBadRequest, gin.H{"video_id": transcodeRequest.VideoID, "status": "Failed to get video metadata. Corrupted file?"})
+		c.JSON(http.StatusBadRequest, gin.H{"video_id": request.VideoID, "status": "Failed to get video metadata. Corrupted file?"})
 
 		// TODO: Delete the video file
 	} else {
-		var transcodeTargets []int
+		var targets []int
 		dbConnectionInfo := map[string]string{
 			"pgDb":       pgDb,
 			"pgUser":     pgUser,
@@ -118,43 +118,43 @@ func performTranscoding(transcodeRequest TranscodeRequest, c *gin.Context) (tran
 		}
 
 		if height >= 720 {
-			transcodeTargets = append(transcodeTargets, 720)
+			targets = append(targets, 720)
 		}
 
 		if height >= 540 {
-			transcodeTargets = append(transcodeTargets, 540)
+			targets = append(targets, 540)
 		}
 
 		if height >= 360 {
-			transcodeTargets = append(transcodeTargets, 360)
+			targets = append(targets, 360)
 		}
 
 		if height < 360 {
-			transcodeTargets = append(transcodeTargets, 360)
+			targets = append(targets, 360)
 		}
 
-		waitGroup.Add(len(transcodeTargets))
+		waitGroup.Add(len(targets))
 
-		for _, target := range transcodeTargets {
+		for _, target := range targets {
 			switch target {
 			case 720:
-				go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+				go TranscodeToHD720P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup, logger)
 			case 540:
-				go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+				go TranscodeToSD540P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup, logger)
 			case 360:
-				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup, logger)
 			default:
-				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup)
+				go TranscodeToSD360P(videoName, videoID, filename, fileFolderPath, dbConnectionInfo, &waitGroup, logger)
 			}
 		}
 
 		waitGroup.Wait()
 
-		c.JSON(http.StatusOK, gin.H{"video_id": transcodeRequest.VideoID, "status": "In progress"})
+		c.JSON(http.StatusOK, gin.H{"video_id": request.VideoID, "status": "In progress"})
 
-		sugaredLogger.Infof("Constructing MPD for %s", videoName)
+		logger.Infof("Constructing MPD for %s", videoName)
 
-		ConstructMPD(videoName, videoID, filename, fileFolderPath, transcodeTargets, dbConnectionInfo)
+		ConstructMPD(videoName, videoID, filename, fileFolderPath, targets, dbConnectionInfo, logger)
 	}
 
 	return

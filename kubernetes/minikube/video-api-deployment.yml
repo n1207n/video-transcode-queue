@@ -25,7 +25,7 @@ spec:
 
       containers:
         - name: video-api
-          image: n1207n/video-transcode-queue/video_backend_api:dev
+          image: n1207n/video-transcode-platform/video_backend_api:dev
           imagePullPolicy: Never
 
           volumeMounts:
@@ -33,7 +33,7 @@ spec:
               name: video-upload-minikube-pv-volume
 
           command: ["ash"]
-          args: ["-c", "/go/bin/video_backend_api"]
+          args: ["-c", "/go/bin/backend"]
 
           ports:
             - containerPort: 8080

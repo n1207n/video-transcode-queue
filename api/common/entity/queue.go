@@ -1,6 +1,8 @@
-package main
+package entity
 
-import "time"
+import (
+	"time"
+)
 
 // Task represents a job task to transcode a video file
 type Task struct {

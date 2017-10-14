@@ -25,7 +25,7 @@ spec:
 
       containers:
         - name: streaming-api
-          image: n1207n/video-transcode-queue/streaming_service:dev
+          image: n1207n/video-transcode-platform/streaming_service:dev
           imagePullPolicy: Never
 
           volumeMounts:
@@ -33,7 +33,7 @@ spec:
               name: video-upload-minikube-pv-volume
 
           command: ["ash"]
-          args: ["-c", "/go/bin/streaming_service"]
+          args: ["-c", "/go/bin/streaming"]
 
           ports:
             - containerPort: 8880

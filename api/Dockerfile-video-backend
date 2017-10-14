@@ -15,14 +15,14 @@ RUN go get -u github.com/jinzhu/gorm/dialects/postgres
 RUN go get -u gopkg.in/redis.v3
 RUN go get -u github.com/adjust/rmq
 
-ADD . /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
+ADD common /go/src/github.com/n1207n/video-transcode-platform/api/common
+ADD backend /go/src/github.com/n1207n/video-transcode-platform/api/backend
 
-WORKDIR /go/src/github.com/n1207n/video-transcode-queue/video_backend_api
+WORKDIR /go/src/github.com/n1207n/video-transcode-platform/api/backend
 
 RUN go build
-
 RUN go install
 
-ENTRYPOINT /go/bin/video_backend_api
+ENTRYPOINT /go/bin/backend
 
 EXPOSE 8080

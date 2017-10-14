@@ -8,6 +8,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/n1207n/video-transcode-platform/api/common/database"
+	"github.com/n1207n/video-transcode-platform/api/common/entity"
+
+	"go.uber.org/zap"
 )
 
 // ExecuteCLI executes constructed command string by os.exec.Command
@@ -26,8 +31,8 @@ func ExecuteCLI(commandString string, returnOutput bool) ([]byte, error) {
 }
 
 // GetVideoDimensionInfo extracts video width and height values
-func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error) {
-	sugaredLogger.Infof("Getting video resolution info: %s/%s\n", folderPath, filename)
+func GetVideoDimensionInfo(filename string, folderPath string, logger *zap.SugaredLogger) (int, int, error) {
+	logger.Infof("Getting video resolution info: %s/%s\n", folderPath, filename)
 
 	ffprobeCommand := fmt.Sprintf("ffprobe -show_streams -print_format json -v quiet %s/%s", folderPath, filename)
 
@@ -35,16 +40,16 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error)
 
 	outputBytes, err := ExecuteCLI(ffprobeCommand, true)
 	if err != nil {
-		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffprobeCommand, err.Error())
+		logger.Errorf("Error during command execution: %s\nError: %s", ffprobeCommand, err.Error())
 
 		return width, height, err
 	}
 
-	var probeData ProbeData
+	var probeData entity.ProbeData
 	err = json.Unmarshal(outputBytes, &probeData)
 
 	if err != nil {
-		sugaredLogger.Errorf("ffprobe JSON parse error: %s\n", err.Error())
+		logger.Errorf("ffprobe JSON parse error: %s\n", err.Error())
 
 		return width, height, err
 	}
@@ -67,8 +72,8 @@ func GetVideoDimensionInfo(filename string, folderPath string) (int, int, error)
 }
 
 // TranscodeToSD360P transcodes video file to 360P
-func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	sugaredLogger.Infof("Transcoding to SD 360P: %s\n", videoName)
+func TranscodeToSD360P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup, logger *zap.SugaredLogger) {
+	logger.Infof("Transcoding to SD 360P: %s\n", videoName)
 
 	defer waitGroup.Done()
 
@@ -78,19 +83,19 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 
 	_, err := ExecuteCLI(ffmpegCommand360P, false)
 	if err != nil {
-		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
+		logger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand360P, err.Error())
 		return
 	}
 
-	sugaredLogger.Infof("Transcoded to SD 360P: %s\n", videoName)
+	logger.Infof("Transcoded to SD 360P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(videoName+"_360.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_360.mp4", folderPath, logger)
 	if err != nil {
-		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
+		logger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
-	videoRendering := VideoRendering{
+	videoRendering := entity.VideoRendering{
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		RenderingTitle: fmt.Sprintf("%s_360", videoName),
@@ -106,15 +111,15 @@ func TranscodeToSD360P(videoName string, videoID int, filename string, folderPat
 	pgPassword := dbConnectionInfo["pgPassword"]
 	pgHost := dbConnectionInfo["pgHost"]
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	CreateVideoRenderingObject(videoRendering, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	database.CreateVideoRenderingObject(videoRendering, connection)
 
-	sugaredLogger.Infof("Added DB record for SD 360P: %s\n", videoName)
+	logger.Infof("Added DB record for SD 360P: %s\n", videoName)
 }
 
 // TranscodeToSD540P transcodes video file to 540P
-func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	sugaredLogger.Infof("Transcoding to SD 540P: %s\n", videoName)
+func TranscodeToSD540P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup, logger *zap.SugaredLogger) {
+	logger.Infof("Transcoding to SD 540P: %s\n", videoName)
 
 	defer waitGroup.Done()
 
@@ -124,19 +129,19 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 
 	_, err := ExecuteCLI(ffmpegCommand540P, false)
 	if err != nil {
-		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
+		logger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand540P, err.Error())
 		return
 	}
 
-	sugaredLogger.Infof("Transcoded to SD 540P: %s\n", videoName)
+	logger.Infof("Transcoded to SD 540P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(videoName+"_540.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_540.mp4", folderPath, logger)
 	if err != nil {
-		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
+		logger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
-	videoRendering := VideoRendering{
+	videoRendering := entity.VideoRendering{
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		RenderingTitle: fmt.Sprintf("%s_540", videoName),
@@ -152,15 +157,15 @@ func TranscodeToSD540P(videoName string, videoID int, filename string, folderPat
 	pgPassword := dbConnectionInfo["pgPassword"]
 	pgHost := dbConnectionInfo["pgHost"]
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	CreateVideoRenderingObject(videoRendering, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	database.CreateVideoRenderingObject(videoRendering, connection)
 
-	sugaredLogger.Infof("Added DB record for SD 540P: %s\n", videoName)
+	logger.Infof("Added DB record for SD 540P: %s\n", videoName)
 }
 
 // TranscodeToHD720P transcodes video file to 720P
-func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup) {
-	sugaredLogger.Infof("Transcoding to HD 720P: %s\n", videoName)
+func TranscodeToHD720P(videoName string, videoID int, filename string, folderPath string, dbConnectionInfo map[string]string, waitGroup *sync.WaitGroup, logger *zap.SugaredLogger) {
+	logger.Infof("Transcoding to HD 720P: %s\n", videoName)
 
 	defer waitGroup.Done()
 
@@ -170,19 +175,19 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 
 	_, err := ExecuteCLI(ffmpegCommand720P, false)
 	if err != nil {
-		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
+		logger.Errorf("Error during command execution: %s\nError: %s", ffmpegCommand720P, err.Error())
 		return
 	}
 
-	sugaredLogger.Infof("Transcoded to HD 720P: %s\n", videoName)
+	logger.Infof("Transcoded to HD 720P: %s\n", videoName)
 
-	width, height, err := GetVideoDimensionInfo(videoName+"_720.mp4", folderPath)
+	width, height, err := GetVideoDimensionInfo(videoName+"_720.mp4", folderPath, logger)
 	if err != nil {
-		sugaredLogger.Errorf("Error from getting video dimension info: %s\n", err.Error())
+		logger.Errorf("Error from getting video dimension info: %s\n", err.Error())
 		return
 	}
 
-	videoRendering := VideoRendering{
+	videoRendering := entity.VideoRendering{
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		RenderingTitle: fmt.Sprintf("%s_720", videoName),
@@ -198,15 +203,15 @@ func TranscodeToHD720P(videoName string, videoID int, filename string, folderPat
 	pgPassword := dbConnectionInfo["pgPassword"]
 	pgHost := dbConnectionInfo["pgHost"]
 
-	connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-	CreateVideoRenderingObject(videoRendering, connection)
+	connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+	database.CreateVideoRenderingObject(videoRendering, connection)
 
-	sugaredLogger.Infof("Added DB record for HD 720P: %s\n", videoName)
+	logger.Infof("Added DB record for HD 720P: %s\n", videoName)
 }
 
 // ConstructMPD creates MPD file for DASH streaming
-func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int, dbConnectionInfo map[string]string) {
-	sugaredLogger.Infof("Constructing MPD file: %s\n", videoName)
+func ConstructMPD(videoName string, videoID int, filename string, folderPath string, transcodeTargets []int, dbConnectionInfo map[string]string, logger *zap.SugaredLogger) {
+	logger.Infof("Constructing MPD file: %s\n", videoName)
 
 	filePath := fmt.Sprintf("%s/%s", folderPath, videoName)
 
@@ -224,17 +229,17 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 
 	_, err := ExecuteCLI(mp4boxCommand, false)
 	if err != nil {
-		sugaredLogger.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
+		logger.Errorf("Error during command execution: %s\nError: %s", mp4boxCommand, err.Error())
 	} else {
 		pgDb := dbConnectionInfo["pgDb"]
 		pgUser := dbConnectionInfo["pgUser"]
 		pgPassword := dbConnectionInfo["pgPassword"]
 		pgHost := dbConnectionInfo["pgHost"]
 
-		connection := GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-		object, err := GetVideoObject(videoID, connection)
+		connection := database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+		object, err := database.GetVideoObject(videoID, connection)
 		if err != nil {
-			sugaredLogger.Errorw("Video object GET failed for updating:", err.Error())
+			logger.Errorw("Video object GET failed for updating:", err.Error())
 			return
 		}
 
@@ -242,18 +247,18 @@ func ConstructMPD(videoName string, videoID int, filename string, folderPath str
 		object.StreamFilePath = fmt.Sprintf("%s.mpd", filePath)
 		object.IsReadyToServe = true
 
-		connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-		_, renderings, renderingListErr := GetVideoRenderingObjects(object, connection)
+		connection = database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+		_, renderings, renderingListErr := database.GetVideoRenderingObjects(object, connection)
 		if renderingListErr != nil {
-			sugaredLogger.Errorw("Video rendering objects GET failed for updating:", renderingListErr.Error())
+			logger.Errorw("Video rendering objects GET failed for updating:", renderingListErr.Error())
 		}
 
 		object.Renderings = renderings
 
-		connection = GetDatabaseConnection(pgUser, pgPassword, pgHost, pgDb)
-		_, updateErr := UpdateVideoObject(object, connection)
+		connection = database.GetConnection(pgUser, pgPassword, pgHost, pgDb)
+		_, updateErr := database.UpdateVideoObject(object, connection)
 		if updateErr != nil {
-			sugaredLogger.Errorw("Video object Update failed:", updateErr.Error())
+			logger.Errorw("Video object Update failed:", updateErr.Error())
 		}
 	}
 }

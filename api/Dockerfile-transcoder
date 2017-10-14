@@ -168,7 +168,7 @@ RUN \
 RUN \
 ## ffmpeg https://ffmpeg.org/
         DIR=$(mktemp -d) && cd ${DIR} && \
-        gpg --keyserver pool.sks-keyservers.net --recv-keys ${FFMPEG_KEY} && \
+        gpg --keyserver hkp://pool.sks-keyservers.net:80 --recv-keys ${FFMPEG_KEY} && \
         curl -sLO http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz && \
         curl -sLO http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz.asc && \
         gpg --batch  --verify ffmpeg-${FFMPEG_VERSION}.tar.gz.asc ffmpeg-${FFMPEG_VERSION}.tar.gz && \
@@ -246,14 +246,14 @@ ENV CGO_LDFLAGS="-L${SRC}/lib -lavcodec -lavformat -lavutil -lswscale -lswresamp
 ENV CGO_CFLAGS="-I${SRC}/include"
 ENV LD_LIBRARY_PATH=/home/dev/lib
 
-ADD . /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
+ADD common /go/src/github.com/n1207n/video-transcode-platform/api/common
+ADD transcode /go/src/github.com/n1207n/video-transcode-platform/api/transcode
 
-WORKDIR /go/src/github.com/n1207n/video-transcode-queue/transcoder_service
+WORKDIR /go/src/github.com/n1207n/video-transcode-platform/api/transcode
 
 RUN go build
-
 RUN go install
 
-ENTRYPOINT /go/bin/transcoder_service
+ENTRYPOINT /go/bin/transcode
 
 EXPOSE 8800

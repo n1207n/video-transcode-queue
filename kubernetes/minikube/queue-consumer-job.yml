@@ -15,7 +15,7 @@ spec:
 
       containers:
       - name: c
-        image: n1207n/video-transcode-queue/task_queue/consumer:dev
+        image: n1207n/video-transcode-platform/task_queue/consumer:dev
         imagePullPolicy: Never
 
         volumeMounts:

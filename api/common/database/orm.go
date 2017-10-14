@@ -1,14 +1,15 @@
-package main
+package database
 
 import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
+	"github.com/n1207n/video-transcode-platform/api/common/entity"
 )
 
 // GetVideoObjects returns a list of Video objects and its count from database
-func GetVideoObjects(connection *gorm.DB) (uint, []Video, error) {
-	var videos []Video
+func GetVideoObjects(connection *gorm.DB) (uint, []entity.Video, error) {
+	var videos []entity.Video
 	var count uint
 	var dbError error
 
@@ -23,8 +24,8 @@ func GetVideoObjects(connection *gorm.DB) (uint, []Video, error) {
 }
 
 // GetVideoRenderingObjects returns a list of VideoRendering objects linked to Video ID and its count from database
-func GetVideoRenderingObjects(video Video, connection *gorm.DB) (uint, []VideoRendering, error) {
-	var renderings []VideoRendering
+func GetVideoRenderingObjects(video entity.Video, connection *gorm.DB) (uint, []entity.VideoRendering, error) {
+	var renderings []entity.VideoRendering
 	var count uint
 	var dbError error
 
@@ -39,8 +40,8 @@ func GetVideoRenderingObjects(video Video, connection *gorm.DB) (uint, []VideoRe
 }
 
 // GetVideoObject returns a Video object from given id from database
-func GetVideoObject(videoID int, connection *gorm.DB) (Video, error) {
-	var video Video
+func GetVideoObject(videoID int, connection *gorm.DB) (entity.Video, error) {
+	var video entity.Video
 	var dbError error
 
 	defer connection.Close()
@@ -58,7 +59,7 @@ func GetVideoObject(videoID int, connection *gorm.DB) (Video, error) {
 }
 
 // CreateVideoObject pushes Video object to database
-func CreateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error) {
+func CreateVideoObject(videoSerializer entity.Video, connection *gorm.DB) (entity.Video, error) {
 	var dbError error
 
 	defer connection.Close()
@@ -73,7 +74,7 @@ func CreateVideoObject(videoSerializer Video, connection *gorm.DB) (Video, error
 }
 
 // UpdateVideoObject updates Video object to database
-func UpdateVideoObject(updatedVideo Video, connection *gorm.DB) (Video, error) {
+func UpdateVideoObject(updatedVideo entity.Video, connection *gorm.DB) (entity.Video, error) {
 	var dbError error
 
 	defer connection.Close()
@@ -87,7 +88,7 @@ func UpdateVideoObject(updatedVideo Video, connection *gorm.DB) (Video, error) {
 }
 
 // DeleteVideoObject deletes Video object in database
-func DeleteVideoObject(video Video, connection *gorm.DB) (Video, error) {
+func DeleteVideoObject(video entity.Video, connection *gorm.DB) (entity.Video, error) {
 	var dbError error
 
 	defer connection.Close()
@@ -101,7 +102,7 @@ func DeleteVideoObject(video Video, connection *gorm.DB) (Video, error) {
 }
 
 // CreateVideoRenderingObject pushes VideoRendering object to database
-func CreateVideoRenderingObject(videoRendering VideoRendering, connection *gorm.DB) (VideoRendering, error) {
+func CreateVideoRenderingObject(videoRendering entity.VideoRendering, connection *gorm.DB) (entity.VideoRendering, error) {
 	var dbError error
 
 	defer connection.Close()
