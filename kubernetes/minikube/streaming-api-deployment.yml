@@ -25,7 +25,7 @@ spec:
 
       containers:
         - name: streaming-api
-          image: n1207n/video-transcode-platform/streaming_service:dev
+          image: n1207n/video-transcode-queue/streaming_service:dev
           imagePullPolicy: Never
 
           volumeMounts:

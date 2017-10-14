@@ -5,7 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/n1207n/video-transcode-platform/api/common/entity"
+	"github.com/n1207n/video-transcode-queue/api/common/entity"
 )
 
 // GetConnection returns an instance

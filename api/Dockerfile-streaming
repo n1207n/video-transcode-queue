@@ -17,10 +17,10 @@ RUN go get -u github.com/jinzhu/gorm/dialects/postgres
 RUN go get -u gopkg.in/redis.v3
 RUN go get -u github.com/adjust/rmq
 
-ADD common /go/src/github.com/n1207n/video-transcode-platform/api/common
-ADD streaming /go/src/github.com/n1207n/video-transcode-platform/api/streaming
+ADD common /go/src/github.com/n1207n/video-transcode-queue/api/common
+ADD streaming /go/src/github.com/n1207n/video-transcode-queue/api/streaming
 
-WORKDIR /go/src/github.com/n1207n/video-transcode-platform/api/streaming
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/api/streaming
 
 RUN go build
 RUN go install

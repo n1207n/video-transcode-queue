@@ -13,8 +13,8 @@ import (
 
 	"github.com/adjust/rmq"
 	"github.com/gin-gonic/gin"
-	"github.com/n1207n/video-transcode-platform/api/common/database"
-	"github.com/n1207n/video-transcode-platform/api/common/entity"
+	"github.com/n1207n/video-transcode-queue/api/common/database"
+	"github.com/n1207n/video-transcode-queue/api/common/entity"
 
 	redis "gopkg.in/redis.v3"
 )

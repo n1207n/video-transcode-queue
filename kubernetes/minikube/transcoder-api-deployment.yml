@@ -25,7 +25,7 @@ spec:
 
       containers:
         - name: transcoder-api
-          image: n1207n/video-transcode-platform/transcoder_service:dev
+          image: n1207n/video-transcode-queue/transcoder_service:dev
           imagePullPolicy: Never
 
           volumeMounts:

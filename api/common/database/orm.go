@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
-	"github.com/n1207n/video-transcode-platform/api/common/entity"
+	"github.com/n1207n/video-transcode-queue/api/common/entity"
 )
 
 // GetVideoObjects returns a list of Video objects and its count from database

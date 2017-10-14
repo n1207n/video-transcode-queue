@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/n1207n/video-transcode-platform/api/common/database"
-	"github.com/n1207n/video-transcode-platform/api/common/entity"
+	"github.com/n1207n/video-transcode-queue/api/common/database"
+	"github.com/n1207n/video-transcode-queue/api/common/entity"
 
 	"go.uber.org/zap"
 )

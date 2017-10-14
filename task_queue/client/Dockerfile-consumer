@@ -9,9 +9,9 @@ RUN go get -u github.com/adjust/rmq
 RUN go get -u github.com/golang/glog
 RUN go get -u gopkg.in/redis.v3
 
-ADD . /go/src/github.com/n1207n/video-transcode-platform/task_queue
+ADD . /go/src/github.com/n1207n/video-transcode-queue/task_queue
 
-WORKDIR /go/src/github.com/n1207n/video-transcode-platform/task_queue
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/task_queue
 
 RUN go build
 

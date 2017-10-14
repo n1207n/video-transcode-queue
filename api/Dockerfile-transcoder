@@ -246,10 +246,10 @@ ENV CGO_LDFLAGS="-L${SRC}/lib -lavcodec -lavformat -lavutil -lswscale -lswresamp
 ENV CGO_CFLAGS="-I${SRC}/include"
 ENV LD_LIBRARY_PATH=/home/dev/lib
 
-ADD common /go/src/github.com/n1207n/video-transcode-platform/api/common
-ADD transcode /go/src/github.com/n1207n/video-transcode-platform/api/transcode
+ADD common /go/src/github.com/n1207n/video-transcode-queue/api/common
+ADD transcode /go/src/github.com/n1207n/video-transcode-queue/api/transcode
 
-WORKDIR /go/src/github.com/n1207n/video-transcode-platform/api/transcode
+WORKDIR /go/src/github.com/n1207n/video-transcode-queue/api/transcode
 
 RUN go build
 RUN go install
